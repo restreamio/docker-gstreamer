@@ -1,0 +1,37 @@
+#!/bin/bash
+set -e
+
+git clone --no-checkout https://gitlab.freedesktop.org/gstreamer/gstreamer.git
+pushd gstreamer
+git checkout $STREAMER_CHECKOUT
+popd
+
+git clone --no-checkout https://gitlab.freedesktop.org/gstreamer/gst-plugins-base.git
+pushd gst-plugins-base
+git checkout $GST_PLUGINS_BASE_CHECKOUT
+popd
+
+git clone --no-checkout https://gitlab.freedesktop.org/slomo/gst-plugins-bad.git
+pushd gst-plugins-bad
+git checkout $GST_PLUGINS_BAD_CHECKOUT
+popd
+
+git clone --no-checkout https://gitlab.freedesktop.org/meh/gst-plugins-good.git
+pushd gst-plugins-good
+git checkout $GST_PLUGINS_GOOD_CHECKOUT
+popd
+
+git clone --no-checkout https://gitlab.freedesktop.org/gstreamer/gst-plugins-ugly.git
+pushd gst-plugins-ugly
+git checkout $GST_PLUGINS_UGLY_CHECKOUT
+popd
+
+git clone --no-checkout https://gitlab.freedesktop.org/gstreamer/gst-libav.git
+pushd gst-libav
+git checkout $GST_LIBAV_CHECKOUT
+popd
+
+git clone --no-checkout https://gitlab.freedesktop.org/libnice/libnice.git
+pushd libnice
+git checkout $LIBNICE_CHECKOUT
+popd

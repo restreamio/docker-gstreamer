@@ -1,0 +1,52 @@
+FROM ubuntu:19.10
+
+COPY docker/build-gstreamer/install-dependencies /
+
+RUN ["/install-dependencies"]
+
+ARG STREAMER_CHECKOUT=19b28788cfd15c1382cc7a6bf6621b246def012f
+ARG GST_PLUGINS_BAD_CHECKOUT=9335ce6ecaa3c53825f81712ec857880b1bfee22
+ARG GST_PLUGINS_BASE_CHECKOUT=0a515acfa807788d87763b929fd684abd9853025
+ARG GST_PLUGINS_GOOD_CHECKOUT=e54054dea2f53774f9b29c2cef888e0b73c707b2
+ARG GST_PLUGINS_UGLY_CHECKOUT=a47b6b5f3c215e05f93617085db03b5a4a9ac72f
+ARG GST_LIBAV_CHECKOUT=b7d450b11834d0a510fdcb661ce105860338e2d6
+ARG LIBNICE_CHECKOUT=d4ef6b692fe7a18013fbb698d8fc7d0f2995ef8c
+
+COPY docker/build-gstreamer/download /
+
+RUN ["/download"]
+
+COPY docker/build-gstreamer/compile /
+
+ARG DEBUG=false
+
+RUN ["/compile"]
+
+FROM ubuntu:19.10
+
+RUN \
+    apt-get update && \
+    apt-get dist-upgrade -y && \
+    apt-get install -y --no-install-recommends \
+        gstreamer1.0-plugins-bad \
+        gstreamer1.0-plugins-base \
+        gstreamer1.0-plugins-good \
+        gstreamer1.0-plugins-ugly \
+        gstreamer1.0-libav \
+        gstreamer1.0-nice && \
+    apt-get remove -y --purge \
+        gstreamer1.0-plugins-bad \
+        gstreamer1.0-plugins-base \
+        gstreamer1.0-plugins-good \
+        gstreamer1.0-plugins-ugly \
+        gstreamer1.0-libav \
+        gstreamer1.0-nice \
+        libgstreamer-plugins-bad1.0-0 \
+        libgstreamer-plugins-base1.0-0 \
+        libgstreamer-plugins-good1.0-0 \
+        libgstreamer1.0-0 \
+        libnice10 && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY --from=0 /gstreamer-binaries /

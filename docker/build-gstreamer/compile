@@ -1,0 +1,18 @@
+#!/bin/bash
+set -e
+
+for repo in gstreamer libnice gst-plugins-base gst-plugins-bad gst-plugins-good gst-plugins-ugly gst-libav; do
+  pushd $repo
+  if [[ $DEBUG == 'true' ]]; then
+    meson build -D prefix=/usr
+  else
+    meson build -D prefix=/usr -D optimization=3 -D debug=false -D b_lto=true -D buildtype=release
+  fi
+  # This is needed for other plugins to be built properly
+  ninja -C build install
+  # This is where we'll grab build artifacts from
+  DESTDIR=/gstreamer-binaries ninja -C build install
+  popd
+done
+
+gst-inspect-1.0
