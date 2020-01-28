@@ -3,7 +3,7 @@ set -e
 
 git clone --no-checkout https://gitlab.freedesktop.org/gstreamer/gstreamer.git
 pushd gstreamer
-git checkout $STREAMER_CHECKOUT
+git checkout $GSTREAMER_CHECKOUT
 popd
 
 git clone --no-checkout https://gitlab.freedesktop.org/gstreamer/gst-plugins-base.git
@@ -16,7 +16,7 @@ pushd gst-plugins-bad
 git checkout $GST_PLUGINS_BAD_CHECKOUT
 popd
 
-git clone --no-checkout https://gitlab.freedesktop.org/meh/gst-plugins-good.git
+git clone --no-checkout https://gitlab.freedesktop.org/gstreamer/gst-plugins-good.git
 pushd gst-plugins-good
 git checkout $GST_PLUGINS_GOOD_CHECKOUT
 popd
