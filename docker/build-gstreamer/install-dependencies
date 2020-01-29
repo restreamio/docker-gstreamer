@@ -1,11 +1,21 @@
 #!/bin/bash
 set -e
 
+export DEBIAN_FRONTEND=noninteractive
+
 sed -i 's/# deb-src/deb-src/g' /etc/apt/sources.list
 apt-get update
 apt-get dist-upgrade -y
-DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ca-certificates ffmpeg git meson ninja-build
-DEBIAN_FRONTEND=noninteractive apt-get build-dep -y gstreamer1.0 gstreamer1.0-plugins-{bad,base,good,ugly} gstreamer1.0-{libav,nice}
+apt-get install -y --no-install-recommends \
+  ca-certificates \
+  ffmpeg \
+  git \
+  meson \
+  ninja-build
+apt-get build-dep -y \
+  gstreamer1.0 \
+  gstreamer1.0-plugins-{bad,base,good,ugly} \
+  gstreamer1.0-{libav,nice}
 # These are not needed for build and will sometimes conflict with things we build
 apt-get remove -y --autoremove --purge \
   gstreamer1.0-doc \

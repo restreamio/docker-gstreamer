@@ -6,6 +6,11 @@ pushd gstreamer
 git checkout $GSTREAMER_CHECKOUT
 popd
 
+git clone --no-checkout https://gitlab.freedesktop.org/libnice/libnice.git
+pushd libnice
+git checkout $LIBNICE_CHECKOUT
+popd
+
 git clone --no-checkout https://gitlab.freedesktop.org/gstreamer/gst-plugins-base.git
 pushd gst-plugins-base
 git checkout $GST_PLUGINS_BASE_CHECKOUT
@@ -31,7 +36,3 @@ pushd gst-libav
 git checkout $GST_LIBAV_CHECKOUT
 popd
 
-git clone --no-checkout https://gitlab.freedesktop.org/libnice/libnice.git
-pushd libnice
-git checkout $LIBNICE_CHECKOUT
-popd

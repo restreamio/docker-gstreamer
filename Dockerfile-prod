@@ -5,12 +5,12 @@ COPY docker/build-gstreamer/install-dependencies /
 RUN ["/install-dependencies"]
 
 ARG GSTREAMER_CHECKOUT=b4ba9ec0896565fec775594e7273cc82a79f41de
+ARG LIBNICE_CHECKOUT=d4ef6b692fe7a18013fbb698d8fc7d0f2995ef8c
+ARG GST_PLUGINS_BASE_CHECKOUT=72cb0c0641ccee2c33801e3df87cad907475ff9a
 ARG GST_PLUGINS_BAD_CHECKOUT=ac9c9d8efc4595df480bb549149356069542af41
-ARG GST_PLUGINS_BASE_CHECKOUT=e0a195b7bf5796960ce18a5ee9766d046553c450
 ARG GST_PLUGINS_GOOD_CHECKOUT=88ce7397fcbe1e9724728798af5905d00ee2d8a5
 ARG GST_PLUGINS_UGLY_CHECKOUT=9273903286b0fe7a9d8a5279c44a5e149e55ff24
 ARG GST_LIBAV_CHECKOUT=c8b88847919c9cb26205d91111fa11d4d4f44883
-ARG LIBNICE_CHECKOUT=d4ef6b692fe7a18013fbb698d8fc7d0f2995ef8c
 
 COPY docker/build-gstreamer/download /
 
@@ -27,6 +27,7 @@ FROM ubuntu:19.10
 RUN \
     apt-get update && \
     apt-get dist-upgrade -y && \
+    # This allows us to easily install what is necessary for GStreamer to work
     apt-get install -y --no-install-recommends \
         gstreamer1.0-plugins-bad \
         gstreamer1.0-plugins-base \
@@ -34,6 +35,7 @@ RUN \
         gstreamer1.0-plugins-ugly \
         gstreamer1.0-libav \
         gstreamer1.0-nice && \
+    # However, we don't need GStreamer itself and its plugins, since we've just built them from source
     apt-get remove -y --purge \
         gstreamer1.0-plugins-bad \
         gstreamer1.0-plugins-base \
