@@ -16,7 +16,7 @@ pushd gst-plugins-base
 git checkout $GST_PLUGINS_BASE_CHECKOUT
 popd
 
-git clone --no-checkout https://gitlab.freedesktop.org/nazar-pc/gst-plugins-bad.git
+git clone --no-checkout https://gitlab.freedesktop.org/gstreamer/gst-plugins-bad.git
 pushd gst-plugins-bad
 git checkout $GST_PLUGINS_BAD_CHECKOUT
 popd
