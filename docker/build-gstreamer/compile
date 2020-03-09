@@ -3,10 +3,11 @@ set -e
 
 for repo in gstreamer libnice gst-plugins-base gst-plugins-bad gst-plugins-good gst-plugins-ugly gst-libav; do
   pushd $repo
+  # TODO: Hack: gupnp=disabled is for libnice, because libgupnp-igd causes memory leaks
   if [[ $DEBUG == 'true' ]]; then
-    meson build -D prefix=/usr
+    meson build -D prefix=/usr -D gupnp=disabled
   else
-    meson build -D prefix=/usr -D optimization=3 -D debug=false -D b_lto=true -D buildtype=release
+    meson build -D prefix=/usr -D gupnp=disabled -D optimization=3 -D debug=false -D b_lto=true -D buildtype=release
   fi
   # This is needed for other plugins to be built properly
   ninja -C build install
