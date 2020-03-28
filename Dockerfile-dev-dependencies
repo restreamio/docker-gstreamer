@@ -1,0 +1,5 @@
+FROM ubuntu:19.10
+
+COPY docker/build-gstreamer/install-dependencies /
+
+RUN ["/install-dependencies"]

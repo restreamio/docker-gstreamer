@@ -1,24 +1,6 @@
-FROM ubuntu:19.10
+FROM restreamio/gstreamer:latest-dev-downloaded
 
-COPY docker/build-gstreamer/install-dependencies /
-
-RUN ["/install-dependencies"]
-
-ARG GSTREAMER_CHECKOUT=b3afd1a2fc4f77724a46459dad7ea5dd80655c34
-ARG LIBNICE_CHECKOUT=a9c2846a89c4e74efbd7ef59fcfe7ff05efb2c5e
-ARG GST_PLUGINS_BASE_CHECKOUT=d5ee11fb36af3aa5a18368648cb043448d66b845
-ARG GST_PLUGINS_BAD_CHECKOUT=319a5e5779e1bae7e26fa157fd24f57fc9b9f1e6
-ARG GST_PLUGINS_GOOD_CHECKOUT=ac43de33a2511b9b5bdb54ea9959e7eaea80e857
-ARG GST_PLUGINS_UGLY_CHECKOUT=9273903286b0fe7a9d8a5279c44a5e149e55ff24
-ARG GST_LIBAV_CHECKOUT=c8b88847919c9cb26205d91111fa11d4d4f44883
-
-COPY docker/build-gstreamer/download /
-
-RUN ["/download"]
-
-COPY docker/build-gstreamer/compile /
-
-ARG DEBUG=false
+ENV DEBUG=false
 
 RUN ["/compile"]
 
