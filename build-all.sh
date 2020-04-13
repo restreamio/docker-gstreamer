@@ -2,7 +2,7 @@
 set -e
 
 # Make sure to always have fresh base image
-docker pull ubuntu:19.10
+docker pull ubuntu:20.04
 # Install dev dependencies
 docker build -t restreamio/gstreamer:latest-dev-dependencies -f Dockerfile-dev-dependencies .
 # Download source code
