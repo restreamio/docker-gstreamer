@@ -31,6 +31,7 @@ apt-get remove -y --autoremove --purge \
   libgstreamer-plugins-good1.0-dev \
   libgstreamer1.0-0 \
   libgstreamer1.0-dev \
+  libusrsctp1 \
   libnice10
 apt-get clean
 rm -rf /var/lib/apt/lists/*

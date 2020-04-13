@@ -29,6 +29,7 @@ RUN \
         libgstreamer-plugins-base1.0-0 \
         libgstreamer-plugins-good1.0-0 \
         libgstreamer1.0-0 \
+        libusrsctp1 \
         libnice10 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
