@@ -11,5 +11,9 @@ docker build -t restreamio/gstreamer:latest-dev-downloaded -f Dockerfile-dev-dow
 docker build -t restreamio/gstreamer:latest-dev-with-source -f Dockerfile-dev-with-source .
 # Build dev image with just binaries
 docker build -t restreamio/gstreamer:latest-dev -f Dockerfile-dev .
-# Build production image with just binaries and necessary dependencies
+# Build base production image with necessary dependencies
+docker build -t restreamio/gstreamer:latest-prod-base -f Dockerfile-prod-base .
+# Build production image optimized binaries and no debug symbols (-O3 LTO)
 docker build -t restreamio/gstreamer:latest-prod -f Dockerfile-prod .
+# Build production image optimized binaries and debug symbols
+docker build -t restreamio/gstreamer:latest-prod-dbg -f Dockerfile-prod-dbg .

@@ -4,4 +4,4 @@ FROM restreamio/gstreamer:latest-dev-with-source
 FROM restreamio/gstreamer:latest-dev-dependencies
 
 # And binaries built with debug symbols
-COPY --from=0 /gstreamer-binaries /
+COPY --from=0 /compiled-binaries /

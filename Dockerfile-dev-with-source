@@ -1,6 +1,7 @@
 FROM restreamio/gstreamer:latest-dev-downloaded
 
 ENV DEBUG=true
+ENV OPTIMIZATIONS=false
 
 # Compile binaries with debug symbols and keep source code
 RUN ["/compile"]

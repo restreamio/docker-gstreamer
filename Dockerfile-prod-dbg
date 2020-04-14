@@ -1,6 +1,6 @@
 FROM restreamio/gstreamer:latest-dev-downloaded
 
-ENV DEBUG=false
+ENV DEBUG=true
 ENV OPTIMIZATIONS=true
 
 RUN ["/compile"]

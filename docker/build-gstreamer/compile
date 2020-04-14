@@ -5,16 +5,21 @@ for repo in gstreamer usrsctp libnice gst-plugins-base gst-plugins-bad gst-plugi
   pushd $repo
   # TODO: Hack: `-D gupnp=disabled` is for libnice, because libgupnp-igd causes memory leaks
   if [[ $DEBUG == 'true' ]]; then
-    meson build -D prefix=/usr -D gupnp=disabled
-#    meson build -D prefix=/usr
+    if [[ $OPTIMIZATIONS == 'true' ]]; then
+      meson build -D prefix=/usr -D gupnp=disabled -D debug=true -D optimization=2
+      #meson build -D prefix=/usr
+    else
+      meson build -D prefix=/usr -D gupnp=disabled -D debug=true
+      #meson build -D prefix=/usr
+  fi
   else
-    meson build -D prefix=/usr -D gupnp=disabled -D optimization=3 -D debug=false -D b_lto=true -D buildtype=release
-#    meson build -D prefix=/usr -D optimization=3 -D debug=false -D b_lto=true -D buildtype=release
+    meson build -D prefix=/usr -D gupnp=disabled -D debug=false -D optimization=3 -D b_lto=true -D buildtype=release
+    #meson build -D prefix=/usr -D optimization=3 -D debug=false -D b_lto=true -D buildtype=release
   fi
   # This is needed for other plugins to be built properly
   ninja -C build install
   # This is where we'll grab build artifacts from
-  DESTDIR=/gstreamer-binaries ninja -C build install
+  DESTDIR=/compiled-binaries ninja -C build install
   popd
 done
 
