@@ -32,6 +32,17 @@ apt-get remove -y --autoremove --purge \
   libgstreamer1.0-0 \
   libgstreamer1.0-dev \
   libusrsctp1 \
-  libnice10
+  libnice10 \
+  libegl1 \
+  libegl-mesa0 \
+  libgl1-mesa-dri \
+  libglapi-mesa \
+  libglu1-mesa \
+  libglx-mesa0 \
+  gtk* \
+  libgtk* \
+  libopengl* \
+  dconf* \
+  libdconf*
 apt-get clean
 rm -rf /var/lib/apt/lists/*

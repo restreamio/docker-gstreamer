@@ -10,7 +10,9 @@ RUN \
         gstreamer1.0-plugins-good \
         gstreamer1.0-plugins-ugly \
         gstreamer1.0-libav \
-        gstreamer1.0-nice && \
+        gstreamer1.0-nice \
+        ladspa-sdk \
+        libxv1 && \
     # However, we don't need GStreamer itself and its plugins, since we've just built them from source
     apt-get remove -y --purge \
         gstreamer1.0-plugins-bad \
