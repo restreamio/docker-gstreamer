@@ -22,6 +22,8 @@ There are 4 images pushed to Docker Hub:
 * restreamio/gstreamer:latest-prod - optimized (`-O3` and `LTO`) build without debug symbols for production purposes
 * restreamio/gstreamer:latest-prod-dbg - optimized (`-O2` only) build with debug symbols included for production purposes with better debugging experience
 
+There are also above tags prefixed with build date for stable reference.
+
 ## Contribution
 Feel free to create issues and send pull requests, they are highly appreciated!
 
