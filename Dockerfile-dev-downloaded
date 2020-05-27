@@ -12,8 +12,8 @@ ARG LIBNICE_CHECKOUT=4c53dc2f0eabbcd899f65e6cf427860fa2d93247
 ARG GST_PLUGINS_BASE_REPOSITORY=https://gitlab.freedesktop.org/gstreamer/gst-plugins-base.git
 ARG GST_PLUGINS_BASE_CHECKOUT=eed54928c8f9cb08164c66993a44ba0d696eac5e
 
-ARG GST_PLUGINS_BAD_REPOSITORY=https://gitlab.freedesktop.org/gstreamer/gst-plugins-bad.git
-ARG GST_PLUGINS_BAD_CHECKOUT=dac36cb98fafa84d1eb2c3ef3fd631983e2c0261
+ARG GST_PLUGINS_BAD_REPOSITORY=https://gitlab.freedesktop.org/ystreet/gst-plugins-bad.git
+ARG GST_PLUGINS_BAD_CHECKOUT=f5d6c98bf2df68649004e68fcc093434e299eed1
 
 ARG GST_PLUGINS_GOOD_REPOSITORY=https://gitlab.freedesktop.org/nazar-pc/gst-plugins-good.git
 ARG GST_PLUGINS_GOOD_CHECKOUT=b48f3644a46365573a09268c54b990cba98e13c3
