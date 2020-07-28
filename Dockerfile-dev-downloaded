@@ -16,7 +16,7 @@ ARG GST_PLUGINS_BAD_REPOSITORY=https://gitlab.freedesktop.org/slomo/gst-plugins-
 ARG GST_PLUGINS_BAD_CHECKOUT=d23a27b91fa039b630ce272cf0bb639bb5ba2dd9
 
 ARG GST_PLUGINS_GOOD_REPOSITORY=https://gitlab.freedesktop.org/nazar-pc/gst-plugins-good.git
-ARG GST_PLUGINS_GOOD_CHECKOUT=ac3e8f68ceb3623e974ba9ac7d48b5fc555624a4
+ARG GST_PLUGINS_GOOD_CHECKOUT=28f83eb6f4e2cf9ff6def9a84593f0f54f633621
 
 ARG GST_PLUGINS_UGLY_REPOSITORY=https://gitlab.freedesktop.org/gstreamer/gst-plugins-ugly.git
 ARG GST_PLUGINS_UGLY_CHECKOUT=ea945eb9c6af89a1ab70ad254fd6f9523eb5861d
