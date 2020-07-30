@@ -21,6 +21,21 @@ pushd gst-plugins-base
 git checkout "$GST_PLUGINS_BASE_CHECKOUT"
 popd
 
+wget https://wpewebkit.org/releases/libwpe-$LIBWPE_VERSION.tar.xz
+tar -xf libwpe-$LIBWPE_VERSION.tar.xz
+rm libwpe-$LIBWPE_VERSION.tar.xz
+mv libwpe-$LIBWPE_VERSION libwpe
+
+wget https://wpewebkit.org/releases/wpebackend-fdo-$WPEBACKEND_FDO_VERSION.tar.xz
+tar -xf wpebackend-fdo-$WPEBACKEND_FDO_VERSION.tar.xz
+rm wpebackend-fdo-$WPEBACKEND_FDO_VERSION.tar.xz
+mv wpebackend-fdo-$WPEBACKEND_FDO_VERSION wpebackend
+
+wget https://wpewebkit.org/releases/wpewebkit-$WPEWEBKIT_VERSION.tar.xz
+tar -xf wpewebkit-$WPEWEBKIT_VERSION.tar.xz
+rm wpewebkit-$WPEWEBKIT_VERSION.tar.xz
+mv wpewebkit-$WPEWEBKIT_VERSION wpewebkit
+
 git clone --no-checkout "$GST_PLUGINS_BAD_REPOSITORY"
 pushd gst-plugins-bad
 git checkout "$GST_PLUGINS_BAD_CHECKOUT"

@@ -10,6 +10,7 @@ Following components are present:
 * gst-libav
 * libnice (newer version from git)
 * libusrsctp (newer version from git)
+* WPE WebKit (newer version from upstream release)
 
 GStreamer and components are tracking upstream master branches (sometimes with minor patches) and are usually updated a few times a month.
 There is a chance that after 1.18 release there will be additional builds against stable releases as well, we'll see.

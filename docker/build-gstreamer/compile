@@ -1,25 +1,45 @@
 #!/bin/bash
 set -e
 
-for repo in gstreamer usrsctp libnice gst-plugins-base gst-plugins-bad gst-plugins-good gst-plugins-ugly gst-libav; do
+for repo in gstreamer usrsctp libnice gst-plugins-base libwpe wpebackend wpewebkit gst-plugins-bad gst-plugins-good gst-plugins-ugly gst-libav; do
   pushd $repo
-  # TODO: Hack: `-D gupnp=disabled` is for libnice, because libgupnp-igd causes memory leaks
-  if [[ $DEBUG == 'true' ]]; then
-    if [[ $OPTIMIZATIONS == 'true' ]]; then
-      meson build -D prefix=/usr -D gupnp=disabled -D debug=true -D optimization=2
-      #meson build -D prefix=/usr
+  # wpewebkit is cmake...
+  if [[ $repo == 'wpewebkit' ]]; then
+    mkdir build
+    pushd build
+    if [[ $DEBUG == 'true' ]]; then
+      if [[ $OPTIMIZATIONS == 'true' ]]; then
+        # RelWithDebInfo is huge, hence just release, we're unlikely to actually debug it
+        cmake -DCMAKE_INSTALL_PREFIX=/usr -DPORT=WPE -DUSE_SYSTEMD=OFF -DENABLE_ACCESSIBILITY=OFF -DENABLE_ACCESSIBILITY=OFF -DENABLE_WEBDRIVER=OFF -DCMAKE_BUILD_TYPE=Release -GNinja ..
+      else
+        cmake -DCMAKE_INSTALL_PREFIX=/usr -DPORT=WPE -DUSE_SYSTEMD=OFF -DENABLE_ACCESSIBILITY=OFF -DENABLE_ACCESSIBILITY=OFF -DENABLE_WEBDRIVER=OFF -DCMAKE_BUILD_TYPE=Debug -GNinja ..
+      fi
     else
-      meson build -D prefix=/usr -D gupnp=disabled -D debug=true
-      #meson build -D prefix=/usr
-  fi
-  else
-    meson build -D prefix=/usr -D gupnp=disabled -D debug=false -D optimization=3 -D b_lto=true -D buildtype=release
-    #meson build -D prefix=/usr -D optimization=3 -D debug=false -D b_lto=true -D buildtype=release
+      cmake -DCMAKE_INSTALL_PREFIX=/usr -DPORT=WPE -DUSE_SYSTEMD=OFF -DENABLE_ACCESSIBILITY=OFF -DENABLE_ACCESSIBILITY=OFF -DENABLE_WEBDRIVER=OFF -DCMAKE_BUILD_TYPE=Release -GNinja ..
+    fi
+    popd
+  elsebrow
+    # TODO: Hack: `-D gupnp=disabled` is for libnice, because libgupnp-igd causes memory leaks
+    if [[ $DEBUG == 'true' ]]; then
+      if [[ $OPTIMIZATIONS == 'true' ]]; then
+        meson build -D prefix=/usr -D gupnp=disabled -D debug=true -D optimization=2
+      else
+        meson build -D prefix=/usr -D gupnp=disabled -D debug=true
+      fi
+    else
+      meson build -D prefix=/usr -D gupnp=disabled -D debug=false -D optimization=3 -D b_lto=true -D buildtype=release
+    fi
   fi
   # This is needed for other plugins to be built properly
   ninja -C build install
   # This is where we'll grab build artifacts from
   DESTDIR=/compiled-binaries ninja -C build install
+
+  if [[ $repo == 'wpewebkit' ]]; then
+    # It is too large for us to afford storing it unfortunately, ~16GiB as of writing this message
+    rm -rf build
+  fi
+
   popd
 done
 
