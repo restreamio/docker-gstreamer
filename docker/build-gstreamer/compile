@@ -18,7 +18,7 @@ for repo in gstreamer usrsctp libnice gst-plugins-base libwpe wpebackend wpewebk
       cmake -DCMAKE_INSTALL_PREFIX=/usr -DPORT=WPE -DUSE_SYSTEMD=OFF -DENABLE_ACCESSIBILITY=OFF -DENABLE_ACCESSIBILITY=OFF -DENABLE_WEBDRIVER=OFF -DCMAKE_BUILD_TYPE=Release -GNinja ..
     fi
     popd
-  elsebrow
+  else
     # TODO: Hack: `-D gupnp=disabled` is for libnice, because libgupnp-igd causes memory leaks
     if [[ $DEBUG == 'true' ]]; then
       if [[ $OPTIMIZATIONS == 'true' ]]; then

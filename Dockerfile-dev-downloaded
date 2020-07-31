@@ -1,7 +1,7 @@
 FROM restreamio/gstreamer:latest-dev-dependencies
 
-ARG GSTREAMER_REPOSITORY=https://gitlab.freedesktop.org/gstreamer/gstreamer.git
-ARG GSTREAMER_CHECKOUT=18f27b10449a916ebdb9e194eadb8469f17cb40d
+ARG GSTREAMER_REPOSITORY=https://gitlab.freedesktop.org/ystreet/gstreamer.git
+ARG GSTREAMER_CHECKOUT=4bd122e6cd74c74a2e5add7ca0153a174ecb987e
 
 ARG LIBWPE_VERSION=1.7.1
 ARG WPEBACKEND_FDO_VERSION=1.7.1
@@ -20,7 +20,7 @@ ARG GST_PLUGINS_BAD_REPOSITORY=https://gitlab.freedesktop.org/nazar-pc/gst-plugi
 ARG GST_PLUGINS_BAD_CHECKOUT=920d69d5a2538751093999db268a6d0742085bdf
 
 ARG GST_PLUGINS_GOOD_REPOSITORY=https://gitlab.freedesktop.org/nazar-pc/gst-plugins-good.git
-ARG GST_PLUGINS_GOOD_CHECKOUT=10752311c4b8920f84ee48d027a2813dc35d2621
+ARG GST_PLUGINS_GOOD_CHECKOUT=553406c1bd3a1254cddc017530ee1d58406cc65f
 
 ARG GST_PLUGINS_UGLY_REPOSITORY=https://gitlab.freedesktop.org/gstreamer/gst-plugins-ugly.git
 ARG GST_PLUGINS_UGLY_CHECKOUT=ea945eb9c6af89a1ab70ad254fd6f9523eb5861d
