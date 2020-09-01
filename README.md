@@ -12,8 +12,8 @@ Following components are present:
 * libusrsctp (newer version from git)
 * WPE WebKit (newer version from upstream release)
 
-GStreamer and components are tracking upstream master branches (sometimes with minor patches) and are usually updated a few times a month.
-There is a chance that after 1.18 release there will be additional builds against stable releases as well, we'll see.
+GStreamer and components are tracking upstream master branches (with minor fixes on top) and are usually updated a few times a month.
+There is a chance after 1.18 release there will be additional builds against stable releases as well, we'll see.
 
 Base OS is Ubuntu 20.04 LTS.
 
