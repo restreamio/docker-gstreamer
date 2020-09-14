@@ -3,6 +3,8 @@ FROM ubuntu:20.04
 RUN \
     apt-get update && \
     apt-get dist-upgrade -y && \
+    apt-get install -y --no-install-recommends \
+        ca-certificates && \
     # This allows us to easily install what is necessary for GStreamer and WPE WebKit to work
     apt-get install -y --no-install-recommends \
         gstreamer1.0-plugins-bad \
