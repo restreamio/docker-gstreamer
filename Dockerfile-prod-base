@@ -17,7 +17,8 @@ RUN \
         libxv1 \
         libwpe-1.0 \
         libwpebackend-fdo-1.0 \
-        libwpewebkit-1.0-3 && \
+        libwpewebkit-1.0-3 \
+        libfdk-aac1 && \
     # However, we don't need GStreamer itself and its plugins as well as WPE WebKit, since we've just built them from source
     apt-get remove -y --purge \
         gstreamer1.0-plugins-bad \
@@ -30,7 +31,6 @@ RUN \
         libgstreamer-plugins-base1.0-0 \
         libgstreamer-plugins-good1.0-0 \
         libgstreamer1.0-0 \
-        libusrsctp1 \
         libnice10 \
         libwpe-1.0 \
         libwpebackend-fdo-1.0 \

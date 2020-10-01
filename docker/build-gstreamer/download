@@ -6,11 +6,6 @@ pushd gstreamer
 git checkout "$GSTREAMER_CHECKOUT"
 popd
 
-git clone --no-checkout "$USRSCTP_REPOSITORY"
-pushd usrsctp
-git checkout "$USRSCTP_CHECKOUT"
-popd
-
 git clone --no-checkout "$LIBNICE_REPOSITORY"
 pushd libnice
 git checkout "$LIBNICE_CHECKOUT"

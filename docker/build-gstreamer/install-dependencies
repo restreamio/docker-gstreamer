@@ -17,7 +17,8 @@ pip3 install meson ninja
 apt-get install -y --no-install-recommends \
   cmake \
   wget \
-  libsoup2.4-dev
+  libsoup2.4-dev \
+  libfdk-aac-dev
 apt-get build-dep -y \
   gstreamer1.0 \
   gstreamer1.0-plugins-{bad,base,good,ugly} \
@@ -40,7 +41,6 @@ apt-get remove -y --autoremove --purge \
   libgstreamer-plugins-good1.0-dev \
   libgstreamer1.0-0 \
   libgstreamer1.0-dev \
-  libusrsctp1 \
   libnice10 \
   gtk* \
   libgtk*

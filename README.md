@@ -9,7 +9,6 @@ Following components are present:
 * gst-plugins-ugly
 * gst-libav
 * libnice (newer version from git)
-* libusrsctp (newer version from git)
 * WPE WebKit (newer version from upstream release)
 
 GStreamer and components are tracking upstream master branches (with minor fixes on top) and are usually updated a few times a month.
