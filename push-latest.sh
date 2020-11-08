@@ -18,4 +18,3 @@ docker push restreamio/gstreamer:$DATE-prod
 docker push restreamio/gstreamer:latest-prod-dbg
 docker tag restreamio/gstreamer:latest-prod-dbg restreamio/gstreamer:$DATE-prod-dbg
 docker push restreamio/gstreamer:$DATE-prod-dbg
-

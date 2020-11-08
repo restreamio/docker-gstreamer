@@ -1,10 +1,10 @@
-FROM restreamio/gstreamer:latest-dev-downloaded
+FROM restreamio/gstreamer:dev-downloaded
 
 ENV DEBUG=true
 ENV OPTIMIZATIONS=true
 
 RUN ["/compile"]
 
-FROM restreamio/gstreamer:latest-prod-base
+FROM restreamio/gstreamer:prod-base
 
 COPY --from=0 /compiled-binaries /

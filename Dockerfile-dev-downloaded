@@ -1,4 +1,4 @@
-FROM restreamio/gstreamer:latest-dev-dependencies
+FROM restreamio/gstreamer:dev-dependencies
 
 ARG GSTREAMER_REPOSITORY=https://gitlab.freedesktop.org/nazar-pc/gstreamer.git
 ARG GSTREAMER_CHECKOUT=cf62f9186bf2954bb95e6ca9b19a2bf81b5097b0

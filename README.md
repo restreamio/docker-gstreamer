@@ -1,4 +1,6 @@
 # docker-gstreamer
+![Docker Pulls](https://img.shields.io/docker/pulls/restreamio/gstreamer)
+
 Ubuntu 20.04-based container images with upstream GStreamer and plugins pre-installed
 
 Following components are present:
@@ -16,13 +18,21 @@ There is a chance after 1.18 release there will be additional builds against sta
 
 Base OS is Ubuntu 20.04 LTS.
 
-There are 4 images pushed to Docker Hub:
+# Builds on Docker Hub
+Builds use Restream-specific patches by default, but there are also vanilla upstream builds available.
+
+There are 4 kinds of images pushed to Docker Hub:
 * restreamio/gstreamer:latest-dev-with-source - includes unoptimized build with debug symbols and even source code it was built with
 * restreamio/gstreamer:latest-dev - same as above, but without source code for development purposes
 * restreamio/gstreamer:latest-prod - optimized (`-O3` and `LTO`) build without debug symbols for production purposes
 * restreamio/gstreamer:latest-prod-dbg - optimized (`-O2` only) build with debug symbols included for production purposes with better debugging experience
 
 There are also above tags prefixed with build date for stable reference.
+
+Finally, starting with `1.18.1` there are also vanilla builds using stable upstream releases with no patches applied, whose tags you can also find on Docker Hub.
+Stable released have 2 tags:
+* regular like `1.18.1` that is a latest build of that upstream release
+* stable reference with one more number after regular `major.minor.patch` that starts with 0 and is incremented if there are multiple builds for the same upstream stable version (like `1.18.1.0`)
 
 ## Contribution
 Feel free to create issues and send pull requests, they are highly appreciated!
