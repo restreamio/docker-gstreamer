@@ -19,6 +19,7 @@ RUN \
         libwpebackend-fdo-1.0 \
         libwpewebkit-1.0-3 \
         libfdk-aac1 \
+        libgraphene-1.0-0 \
         libunwind8 \
         libdw1 && \
     # However, we don't need GStreamer itself and its plugins as well as WPE WebKit, since we've just built them from source
