@@ -1,5 +1,5 @@
 # docker-gstreamer
-![Docker Pulls](https://img.shields.io/docker/pulls/restreamio/gstreamer)
+[![Docker Pulls](https://img.shields.io/docker/pulls/restreamio/gstreamer)](https://hub.docker.com/r/restreamio/gstreamer)
 
 Ubuntu 20.04-based container images with upstream GStreamer and plugins pre-installed
 
@@ -7,7 +7,7 @@ Following components are present:
 * GStreamer
 * gst-plugins-base
 * gst-plugins-good
-* gst-plugins-bad
+* gst-plugins-bad (with `msdk`)
 * gst-plugins-ugly
 * gst-libav
 * libnice (newer version from git)

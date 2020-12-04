@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-for repo in gstreamer libnice gst-plugins-base libwpe wpebackend wpewebkit gst-plugins-bad gst-plugins-good gst-plugins-ugly gst-libav; do
+for repo in gstreamer libnice gst-plugins-base libwpe wpebackend-fdo wpewebkit gst-plugins-bad gst-plugins-good gst-plugins-ugly gst-libav; do
   pushd $repo
   # wpewebkit is cmake...
   if [[ $repo == 'wpewebkit' ]]; then
@@ -22,12 +22,12 @@ for repo in gstreamer libnice gst-plugins-base libwpe wpebackend wpewebkit gst-p
     # TODO: Hack: `-D gupnp=disabled` is for libnice, because libgupnp-igd causes memory leaks
     if [[ $DEBUG == 'true' ]]; then
       if [[ $OPTIMIZATIONS == 'true' ]]; then
-        meson build -D prefix=/usr -D gupnp=disabled -D debug=true -D optimization=2
+        meson build -D prefix=/usr -D gupnp=disabled -D msdk=enabled -D debug=true -D optimization=2
       else
-        meson build -D prefix=/usr -D gupnp=disabled -D debug=true
+        meson build -D prefix=/usr -D gupnp=disabled -D msdk=enabled -D debug=true
       fi
     else
-      meson build -D prefix=/usr -D gupnp=disabled -D debug=false -D optimization=3 -D b_lto=true -D buildtype=release
+      meson build -D prefix=/usr -D gupnp=disabled -D msdk=enabled -D debug=false -D optimization=3 -D b_lto=true -D buildtype=release
     fi
   fi
   # This is needed for other plugins to be built properly

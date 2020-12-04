@@ -24,7 +24,7 @@ mv libwpe-$LIBWPE_VERSION libwpe
 wget https://wpewebkit.org/releases/wpebackend-fdo-$WPEBACKEND_FDO_VERSION.tar.xz
 tar -xf wpebackend-fdo-$WPEBACKEND_FDO_VERSION.tar.xz
 rm wpebackend-fdo-$WPEBACKEND_FDO_VERSION.tar.xz
-mv wpebackend-fdo-$WPEBACKEND_FDO_VERSION wpebackend
+mv wpebackend-fdo-$WPEBACKEND_FDO_VERSION wpebackend-fdo
 
 wget https://wpewebkit.org/releases/wpewebkit-$WPEWEBKIT_VERSION.tar.xz
 tar -xf wpewebkit-$WPEWEBKIT_VERSION.tar.xz
