@@ -3,6 +3,8 @@ set -e
 
 DATE=$(date -u +"%Y-%m-%dT%H-%M-%SZ")
 
+echo $DATE
+
 docker push restreamio/gstreamer:latest-dev-with-source
 docker tag restreamio/gstreamer:latest-dev-with-source restreamio/gstreamer:$DATE-dev-with-source
 docker push restreamio/gstreamer:$DATE-dev-with-source
