@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:20.10
 
 RUN \
     apt-get update && \
@@ -8,7 +8,7 @@ RUN \
         libunwind8 \
         libdw1 \
         libgmp10 \
-        libgsl23 \
+        libgsl25 \
         libglib2.0-0 \
         libcap2 \
         liborc-0.4-0 \
@@ -58,7 +58,7 @@ RUN \
         libflite1 \
         libssl1.1 \
         ladspa-sdk \
-        libfdk-aac1 \
+        libfdk-aac2 \
         libfluidsynth2 \
         libgsm1 \
         libkate1 \
@@ -70,7 +70,7 @@ RUN \
         libmjpegutils-2.1-0 \
         libmpcdec6 \
         libdvdnav4 \
-        libdvdread7 \
+        libdvdread8 \
         librsvg2-2 \
         librtmp1 \
         libsbc1 \
@@ -84,9 +84,9 @@ RUN \
         libwebrtc-audio-processing1 \
         libofa0 \
         libzvbi0 \
-        libopenexr24 \
+        libopenexr25 \
         libwildmidi2 \
-        libx265-179 \
+        libx265-192 \
         libzbar0 \
         wayland-protocols \
         libaa1 \
@@ -101,7 +101,7 @@ RUN \
         libtwolame0 \
         libwavpack1 \
         liba52-0.7.4 \
-        libx264-155 \
+        libx264-160 \
         libopencore-amrnb0 \
         libopencore-amrwb0 \
         libmpeg2-4 \
