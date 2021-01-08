@@ -1,7 +1,7 @@
 # docker-gstreamer
 [![Docker Pulls](https://img.shields.io/docker/pulls/restreamio/gstreamer)](https://hub.docker.com/r/restreamio/gstreamer)
 
-Ubuntu 20.04-based container images with upstream GStreamer and plugins pre-installed
+Ubuntu 20.10-based container images with upstream GStreamer and plugins pre-installed
 
 Following components are present:
 * GStreamer
@@ -16,7 +16,11 @@ Following components are present:
 GStreamer and components are tracking upstream master branches (with minor fixes on top) and are usually updated a few times a month.
 There are also builds of stable upstream releases available as well.
 
-Base OS is Ubuntu 20.04 LTS.
+Base OS is Ubuntu 20.10.
+
+NOTE:
+* 1.18.2.0 images and older were based on Ubuntu 20.04 
+* 2020-12-30T23-16-11Z images and older were based on Ubuntu 20.04
 
 # Builds on Docker Hub
 Builds use Restream-specific patches by default, but there are also vanilla upstream builds available.
