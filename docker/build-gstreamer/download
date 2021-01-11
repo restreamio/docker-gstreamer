@@ -21,10 +21,15 @@ tar -xf libwpe-$LIBWPE_VERSION.tar.xz
 rm libwpe-$LIBWPE_VERSION.tar.xz
 mv libwpe-$LIBWPE_VERSION libwpe
 
-wget https://wpewebkit.org/releases/wpebackend-fdo-$WPEBACKEND_FDO_VERSION.tar.xz
-tar -xf wpebackend-fdo-$WPEBACKEND_FDO_VERSION.tar.xz
-rm wpebackend-fdo-$WPEBACKEND_FDO_VERSION.tar.xz
-mv wpebackend-fdo-$WPEBACKEND_FDO_VERSION wpebackend-fdo
+#wget https://wpewebkit.org/releases/wpebackend-fdo-$WPEBACKEND_FDO_VERSION.tar.xz
+#tar -xf wpebackend-fdo-$WPEBACKEND_FDO_VERSION.tar.xz
+#rm wpebackend-fdo-$WPEBACKEND_FDO_VERSION.tar.xz
+#mv wpebackend-fdo-$WPEBACKEND_FDO_VERSION wpebackend-fdo
+
+wget https://github.com/Igalia/WPEBackend-fdo/archive/$WPEBACKEND_FDO_CHECKOUT.tar.gz
+tar -xf $WPEBACKEND_FDO_CHECKOUT.tar.gz
+rm $WPEBACKEND_FDO_CHECKOUT.tar.gz
+mv WPEBackend-fdo-$WPEBACKEND_FDO_CHECKOUT wpebackend-fdo
 
 wget https://wpewebkit.org/releases/wpewebkit-$WPEWEBKIT_VERSION.tar.xz
 tar -xf wpewebkit-$WPEWEBKIT_VERSION.tar.xz
