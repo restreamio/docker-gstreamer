@@ -51,3 +51,8 @@ pushd gst-libav
 git checkout "$GST_LIBAV_CHECKOUT"
 popd
 
+git clone --no-checkout "$GSTREAMER_VAAPI_REPOSITORY"
+pushd gstreamer-vaapi
+git checkout "$GSTREAMER_VAAPI_CHECKOUT"
+popd
+

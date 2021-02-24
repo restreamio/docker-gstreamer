@@ -10,6 +10,7 @@ Following components are present:
 * gst-plugins-bad (with `msdk`)
 * gst-plugins-ugly
 * gst-libav
+* gstreamer-vaapi
 * libnice (newer version from git)
 * WPE WebKit (newer version from upstream release)
 
