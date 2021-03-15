@@ -24,6 +24,8 @@ docker build -t restreamio/gstreamer:dev-downloaded \
     --build-arg GST_PLUGINS_UGLY_CHECKOUT=$1 \
     --build-arg GST_LIBAV_REPOSITORY=https://gitlab.freedesktop.org/gstreamer/gst-libav.git \
     --build-arg GST_LIBAV_CHECKOUT=$1 \
+    --build-arg GSTREAMER_VAAPI_REPOSITORY=https://gitlab.freedesktop.org/gstreamer/gstreamer-vaapi.git \
+    --build-arg GSTREAMER_VAAPI_CHECKOUT=$1 \
     -f Dockerfile-dev-downloaded .
 # Build dev image with source code included
 docker build -t restreamio/gstreamer:$1-dev-with-source -f Dockerfile-dev-with-source .
