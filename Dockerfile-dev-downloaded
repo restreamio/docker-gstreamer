@@ -3,9 +3,10 @@ FROM restreamio/gstreamer:dev-dependencies
 ARG GSTREAMER_REPOSITORY=https://gitlab.freedesktop.org/nazar-pc/gstreamer.git
 ARG GSTREAMER_CHECKOUT=e89a4b843724ecbe18dd48e5e313101cbb860b04
 
-ARG LIBWPE_VERSION=1.10.0
-ARG WPEBACKEND_FDO_VERSION=1.9.90
-ARG WPEWEBKIT_VERSION=2.32.0
+# Upgrade once https://github.com/Igalia/WPEBackend-fdo/issues/145 is fixed
+ARG LIBWPE_VERSION=1.9.1
+ARG WPEBACKEND_FDO_VERSION=1.9.1
+ARG WPEWEBKIT_VERSION=2.31.1
 
 ARG LIBNICE_REPOSITORY=https://gitlab.freedesktop.org/libnice/libnice.git
 ARG LIBNICE_CHECKOUT=caf9f1d8b1d4675c8c88f8f6fa04d3ff5e27f09a
