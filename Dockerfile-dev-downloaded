@@ -1,7 +1,7 @@
 FROM restreamio/gstreamer:dev-dependencies
 
 ARG GSTREAMER_REPOSITORY=https://gitlab.freedesktop.org/nazar-pc/gstreamer.git
-ARG GSTREAMER_CHECKOUT=70932a5031982fdfa8ab10fbdf3d28a6f1eae8dd
+ARG GSTREAMER_CHECKOUT=97b0bbabad4660b68498c9c59a578e6c9b2699ee
 
 # Upgrade once https://github.com/Igalia/WPEBackend-fdo/issues/145 is fixed
 ARG LIBWPE_VERSION=1.9.1
@@ -9,25 +9,25 @@ ARG WPEBACKEND_FDO_VERSION=1.9.1
 ARG WPEWEBKIT_VERSION=2.31.1
 
 ARG LIBNICE_REPOSITORY=https://gitlab.freedesktop.org/libnice/libnice.git
-ARG LIBNICE_CHECKOUT=a874865807cdd3b27f63e32c9d2675fe31878158
+ARG LIBNICE_CHECKOUT=a0cfef727f6fdbc584514b6eefc6d9743874df97
 
 ARG GST_PLUGINS_BASE_REPOSITORY=https://gitlab.freedesktop.org/nazar-pc/gst-plugins-base.git
-ARG GST_PLUGINS_BASE_CHECKOUT=3cd3b973f7db69d02890c570be20b7bad48969b4
+ARG GST_PLUGINS_BASE_CHECKOUT=cd9b66678159ee4df36a39b4e54f54e8d34fa5fb
 
 ARG GST_PLUGINS_BAD_REPOSITORY=https://gitlab.freedesktop.org/nazar-pc/gst-plugins-bad.git
-ARG GST_PLUGINS_BAD_CHECKOUT=f4a5fd30cc4f155cb4061229dec074fd5f82f3eb
+ARG GST_PLUGINS_BAD_CHECKOUT=81fff69ec072a403f94e4d67e0896ae2750afa6f
 
 ARG GST_PLUGINS_GOOD_REPOSITORY=https://gitlab.freedesktop.org/nazar-pc/gst-plugins-good.git
-ARG GST_PLUGINS_GOOD_CHECKOUT=880db701edca869660c75fcdc4df656d91e5241b
+ARG GST_PLUGINS_GOOD_CHECKOUT=7d2d094971248f3efd0c7da9ed31ce205bf4a464
 
 ARG GST_PLUGINS_UGLY_REPOSITORY=https://gitlab.freedesktop.org/gstreamer/gst-plugins-ugly.git
-ARG GST_PLUGINS_UGLY_CHECKOUT=828d1d0d182b59413237347e969dd05fadcc303f
+ARG GST_PLUGINS_UGLY_CHECKOUT=cc1a7e2c4d10ab118d635a9db163440bc9d96dd0
 
 ARG GST_LIBAV_REPOSITORY=https://gitlab.freedesktop.org/gstreamer/gst-libav.git
-ARG GST_LIBAV_CHECKOUT=a98eafa5a7339dce56f028b0d45b97a5706f02bd
+ARG GST_LIBAV_CHECKOUT=e0be2033a03547135ffda9faa596ffdba939a61e
 
 ARG GSTREAMER_VAAPI_REPOSITORY=https://gitlab.freedesktop.org/gstreamer/gstreamer-vaapi.git
-ARG GSTREAMER_VAAPI_CHECKOUT=2080979d102a34dbb8710d36ea45374cadf38d8e
+ARG GSTREAMER_VAAPI_CHECKOUT=26143333899382035e66f0360019c67d4a252e78
 
 COPY docker/build-gstreamer/download /
 
