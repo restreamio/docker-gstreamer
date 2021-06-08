@@ -1,7 +1,7 @@
 FROM restreamio/gstreamer:dev-dependencies
 
 ARG GSTREAMER_REPOSITORY=https://gitlab.freedesktop.org/nazar-pc/gstreamer.git
-ARG GSTREAMER_CHECKOUT=97b0bbabad4660b68498c9c59a578e6c9b2699ee
+ARG GSTREAMER_CHECKOUT=ae23ff6481d2fe626f3aaec717868d0e19a3dcd9
 
 # Upgrade once https://github.com/Igalia/WPEBackend-fdo/issues/145 is fixed
 ARG LIBWPE_VERSION=1.9.1
@@ -12,10 +12,10 @@ ARG LIBNICE_REPOSITORY=https://gitlab.freedesktop.org/libnice/libnice.git
 ARG LIBNICE_CHECKOUT=a0cfef727f6fdbc584514b6eefc6d9743874df97
 
 ARG GST_PLUGINS_BASE_REPOSITORY=https://gitlab.freedesktop.org/nazar-pc/gst-plugins-base.git
-ARG GST_PLUGINS_BASE_CHECKOUT=cd9b66678159ee4df36a39b4e54f54e8d34fa5fb
+ARG GST_PLUGINS_BASE_CHECKOUT=cd330cec4df9ca1e264db83bda84d6fa0a8d7cfe
 
 ARG GST_PLUGINS_BAD_REPOSITORY=https://gitlab.freedesktop.org/nazar-pc/gst-plugins-bad.git
-ARG GST_PLUGINS_BAD_CHECKOUT=81fff69ec072a403f94e4d67e0896ae2750afa6f
+ARG GST_PLUGINS_BAD_CHECKOUT=a43cf9e80348207790eb6f8cf16cc7f23b342da3
 
 ARG GST_PLUGINS_GOOD_REPOSITORY=https://gitlab.freedesktop.org/nazar-pc/gst-plugins-good.git
 ARG GST_PLUGINS_GOOD_CHECKOUT=7d2d094971248f3efd0c7da9ed31ce205bf4a464
