@@ -29,6 +29,9 @@ ARG GST_LIBAV_CHECKOUT=e0be2033a03547135ffda9faa596ffdba939a61e
 ARG GSTREAMER_VAAPI_REPOSITORY=https://gitlab.freedesktop.org/gstreamer/gstreamer-vaapi.git
 ARG GSTREAMER_VAAPI_CHECKOUT=26143333899382035e66f0360019c67d4a252e78
 
+ARG GST_PYTHON_REPOSITORY=https://gitlab.freedesktop.org/gstreamer/gst-python.git
+ARG GST_PYTHON_CHECKOUT=f9eac69d5409982e23ac5cd401f65fc5a07e92cb
+
 COPY docker/build-gstreamer/download /
 
 RUN ["/download"]

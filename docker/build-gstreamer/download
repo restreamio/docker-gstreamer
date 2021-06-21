@@ -56,3 +56,7 @@ pushd gstreamer-vaapi
 git checkout "$GSTREAMER_VAAPI_CHECKOUT"
 popd
 
+git clone --no-checkout "$GST_PYTHON_REPOSITORY"
+pushd gst-python
+git checkout "$GST_PYTHON_CHECKOUT"
+popd
