@@ -121,7 +121,8 @@ apt-get install -y --no-install-recommends \
   intel-media-va-driver-non-free \
   libudev-dev \
   python3-gi \
-  python3-gst-1.0
+  python3-gst-1.0 \
+  python-gi-dev
 pip3 install meson ninja --no-cache-dir
 apt-get clean
 rm -rf /var/lib/apt/lists/*
