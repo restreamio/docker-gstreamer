@@ -7,15 +7,40 @@ for repo in gstreamer libnice gst-plugins-base libwpe wpebackend-fdo wpewebkit g
   if [[ $repo == 'wpewebkit' ]]; then
     mkdir build
     pushd build
+    # TODO: Remove `-DUSE_GSTREAMER_GL=OFF` once configurable in runtime
     if [[ $DEBUG == 'true' ]]; then
       if [[ $OPTIMIZATIONS == 'true' ]]; then
         # RelWithDebInfo is huge, hence just release, we're unlikely to actually debug it
-        cmake -DCMAKE_INSTALL_PREFIX=/usr -DPORT=WPE -DUSE_SYSTEMD=OFF -DENABLE_ACCESSIBILITY=OFF -DENABLE_WEBDRIVER=OFF -DCMAKE_BUILD_TYPE=Release -GNinja ..
+        cmake \
+          -DCMAKE_INSTALL_PREFIX=/usr \
+          -DPORT=WPE \
+          -DUSE_SYSTEMD=OFF \
+          -DENABLE_ACCESSIBILITY=OFF \
+          -DENABLE_WEBDRIVER=OFF \
+          -DUSE_GSTREAMER_GL=OFF \
+          -DCMAKE_BUILD_TYPE=Release \
+          -GNinja ..
       else
-        cmake -DCMAKE_INSTALL_PREFIX=/usr -DPORT=WPE -DUSE_SYSTEMD=OFF -DENABLE_ACCESSIBILITY=OFF -DENABLE_WEBDRIVER=OFF -DCMAKE_BUILD_TYPE=Debug -GNinja ..
+        cmake \
+          -DCMAKE_INSTALL_PREFIX=/usr \
+          -DPORT=WPE \
+          -DUSE_SYSTEMD=OFF \
+          -DENABLE_ACCESSIBILITY=OFF \
+          -DENABLE_WEBDRIVER=OFF \
+          -DUSE_GSTREAMER_GL=OFF \
+          -DCMAKE_BUILD_TYPE=Debug \
+          -GNinja ..
       fi
     else
-      cmake -DCMAKE_INSTALL_PREFIX=/usr -DPORT=WPE -DUSE_SYSTEMD=OFF -DENABLE_ACCESSIBILITY=OFF -DENABLE_WEBDRIVER=OFF -DCMAKE_BUILD_TYPE=Release -GNinja ..
+      cmake \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DPORT=WPE \
+        -DUSE_SYSTEMD=OFF \
+        -DENABLE_ACCESSIBILITY=OFF \
+        -DENABLE_WEBDRIVER=OFF \
+        -DUSE_GSTREAMER_GL=OFF \
+        -DCMAKE_BUILD_TYPE=Release \
+        -GNinja ..
     fi
     popd
   else

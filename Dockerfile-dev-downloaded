@@ -1,33 +1,32 @@
 FROM restreamio/gstreamer:dev-dependencies
 
 ARG GSTREAMER_REPOSITORY=https://gitlab.freedesktop.org/nazar-pc/gstreamer.git
-ARG GSTREAMER_CHECKOUT=ae23ff6481d2fe626f3aaec717868d0e19a3dcd9
+ARG GSTREAMER_CHECKOUT=e78ecbbeec58e973328ff66e12cf06d1e92d2e9c
 
-# Upgrade once https://github.com/Igalia/WPEBackend-fdo/issues/145 is fixed
-ARG LIBWPE_VERSION=1.9.1
-ARG WPEBACKEND_FDO_VERSION=1.9.1
-ARG WPEWEBKIT_VERSION=2.31.1
+ARG LIBWPE_VERSION=1.10.1
+ARG WPEBACKEND_FDO_VERSION=1.10.0
+ARG WPEWEBKIT_VERSION=2.32.1
 
 ARG LIBNICE_REPOSITORY=https://gitlab.freedesktop.org/libnice/libnice.git
 ARG LIBNICE_CHECKOUT=a0cfef727f6fdbc584514b6eefc6d9743874df97
 
 ARG GST_PLUGINS_BASE_REPOSITORY=https://gitlab.freedesktop.org/nazar-pc/gst-plugins-base.git
-ARG GST_PLUGINS_BASE_CHECKOUT=cd330cec4df9ca1e264db83bda84d6fa0a8d7cfe
+ARG GST_PLUGINS_BASE_CHECKOUT=003686a7d11b6e0ce66b3510a244a27dcfb3b69b
 
 ARG GST_PLUGINS_BAD_REPOSITORY=https://gitlab.freedesktop.org/nazar-pc/gst-plugins-bad.git
-ARG GST_PLUGINS_BAD_CHECKOUT=a43cf9e80348207790eb6f8cf16cc7f23b342da3
+ARG GST_PLUGINS_BAD_CHECKOUT=3bc956940e1ae012cb6a961ff675167b0e8a21f5
 
 ARG GST_PLUGINS_GOOD_REPOSITORY=https://gitlab.freedesktop.org/nazar-pc/gst-plugins-good.git
-ARG GST_PLUGINS_GOOD_CHECKOUT=7d2d094971248f3efd0c7da9ed31ce205bf4a464
+ARG GST_PLUGINS_GOOD_CHECKOUT=005b3ed6406ed706209ba3b9d306b7d9fa23c792
 
 ARG GST_PLUGINS_UGLY_REPOSITORY=https://gitlab.freedesktop.org/gstreamer/gst-plugins-ugly.git
 ARG GST_PLUGINS_UGLY_CHECKOUT=cc1a7e2c4d10ab118d635a9db163440bc9d96dd0
 
 ARG GST_LIBAV_REPOSITORY=https://gitlab.freedesktop.org/gstreamer/gst-libav.git
-ARG GST_LIBAV_CHECKOUT=e0be2033a03547135ffda9faa596ffdba939a61e
+ARG GST_LIBAV_CHECKOUT=678773bb6468e815c180ff82a09d863451e89ba8
 
 ARG GSTREAMER_VAAPI_REPOSITORY=https://gitlab.freedesktop.org/gstreamer/gstreamer-vaapi.git
-ARG GSTREAMER_VAAPI_CHECKOUT=26143333899382035e66f0360019c67d4a252e78
+ARG GSTREAMER_VAAPI_CHECKOUT=677d1e01051e2ee47439cff7cc7f527bb71afbb8
 
 COPY docker/build-gstreamer/download /
 

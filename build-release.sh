@@ -7,7 +7,7 @@ if [[ -z "$1" ]]; then
 fi
 
 # Make sure to always have fresh base image
-docker pull ubuntu:20.10
+docker pull ubuntu:21.04
 # Install dev dependencies
 docker build -t restreamio/gstreamer:dev-dependencies -f Dockerfile-dev-dependencies .
 # Download source code
