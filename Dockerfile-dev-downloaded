@@ -11,7 +11,7 @@ ARG LIBNICE_REPOSITORY=https://gitlab.freedesktop.org/libnice/libnice.git
 ARG LIBNICE_CHECKOUT=a0cfef727f6fdbc584514b6eefc6d9743874df97
 
 ARG GST_PLUGINS_BASE_REPOSITORY=https://gitlab.freedesktop.org/pldin601/gst-plugins-base.git
-ARG GST_PLUGINS_BASE_CHECKOUT=e582e38fc2c887e4bd3574081bea713331dd3a6a
+ARG GST_PLUGINS_BASE_CHECKOUT=c474293d070996661a11ebfbb69d32e3246291ab
 
 ARG GST_PLUGINS_BAD_REPOSITORY=https://gitlab.freedesktop.org/pldin601/gst-plugins-bad.git
 ARG GST_PLUGINS_BAD_CHECKOUT=a4881f74c9d5e6fe29648bb1def668eb7f06eebb
