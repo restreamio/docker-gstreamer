@@ -1,7 +1,7 @@
 FROM restreamio/gstreamer:dev-dependencies
 
-ARG GSTREAMER_REPOSITORY=https://gitlab.freedesktop.org/pldin601/gstreamer.git
-ARG GSTREAMER_CHECKOUT=e78ecbbeec58e973328ff66e12cf06d1e92d2e9c
+ARG GSTREAMER_REPOSITORY=https://github.com/pldin601-gstreamer/gstreamer.git
+ARG GSTREAMER_CHECKOUT=1.19.2
 
 ARG LIBWPE_VERSION=1.10.1
 ARG WPEBACKEND_FDO_VERSION=1.10.0
@@ -10,20 +10,20 @@ ARG WPEWEBKIT_VERSION=2.32.2
 ARG LIBNICE_REPOSITORY=https://gitlab.freedesktop.org/libnice/libnice.git
 ARG LIBNICE_CHECKOUT=a0cfef727f6fdbc584514b6eefc6d9743874df97
 
-ARG GST_PLUGINS_BASE_REPOSITORY=https://gitlab.freedesktop.org/pldin601/gst-plugins-base.git
-ARG GST_PLUGINS_BASE_CHECKOUT=57fb883b3f8c6d7a397afc0dfc4a7c2e5af05579
+ARG GST_PLUGINS_BASE_REPOSITORY=https://github.com/pldin601-gstreamer/gst-plugins-base.git
+ARG GST_PLUGINS_BASE_CHECKOUT=8c38282e0e9c3da42916e57200261d5078319834
 
-ARG GST_PLUGINS_BAD_REPOSITORY=https://gitlab.freedesktop.org/pldin601/gst-plugins-bad.git
-ARG GST_PLUGINS_BAD_CHECKOUT=a4881f74c9d5e6fe29648bb1def668eb7f06eebb
+ARG GST_PLUGINS_BAD_REPOSITORY=https://github.com/pldin601-gstreamer/gst-plugins-bad.git
+ARG GST_PLUGINS_BAD_CHECKOUT=1.19.2
 
-ARG GST_PLUGINS_GOOD_REPOSITORY=https://gitlab.freedesktop.org/pldin601/gst-plugins-good.git
-ARG GST_PLUGINS_GOOD_CHECKOUT=ea3f562cd783631ba0bea98e873aadf61ce69f10
+ARG GST_PLUGINS_GOOD_REPOSITORY=https://github.com/pldin601-gstreamer/gst-plugins-good.git
+ARG GST_PLUGINS_GOOD_CHECKOUT=1.19.2
 
-ARG GST_PLUGINS_UGLY_REPOSITORY=https://gitlab.freedesktop.org/gstreamer/gst-plugins-ugly.git
-ARG GST_PLUGINS_UGLY_CHECKOUT=cc1a7e2c4d10ab118d635a9db163440bc9d96dd0
+ARG GST_PLUGINS_UGLY_REPOSITORY=https://github.com/pldin601-gstreamer/gst-plugins-ugly.git
+ARG GST_PLUGINS_UGLY_CHECKOUT=1.19.2
 
-ARG GST_LIBAV_REPOSITORY=https://gitlab.freedesktop.org/gstreamer/gst-libav.git
-ARG GST_LIBAV_CHECKOUT=17aca8a8c2b581b11b539a6a138241302cce7290
+ARG GST_LIBAV_REPOSITORY=https://github.com/pldin601-gstreamer/gst-libav.git
+ARG GST_LIBAV_CHECKOUT=1.19.2
 
 ARG GSTREAMER_VAAPI_REPOSITORY=https://gitlab.freedesktop.org/gstreamer/gstreamer-vaapi.git
 ARG GSTREAMER_VAAPI_CHECKOUT=677d1e01051e2ee47439cff7cc7f527bb71afbb8
