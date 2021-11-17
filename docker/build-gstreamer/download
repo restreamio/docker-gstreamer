@@ -6,16 +6,6 @@ pushd gstreamer
 git checkout "$GSTREAMER_CHECKOUT"
 popd
 
-git clone --no-checkout "$LIBNICE_REPOSITORY"
-pushd libnice
-git checkout "$LIBNICE_CHECKOUT"
-popd
-
-git clone --no-checkout "$GST_PLUGINS_BASE_REPOSITORY"
-pushd gst-plugins-base
-git checkout "$GST_PLUGINS_BASE_CHECKOUT"
-popd
-
 wget https://wpewebkit.org/releases/libwpe-$LIBWPE_VERSION.tar.xz
 tar -xf libwpe-$LIBWPE_VERSION.tar.xz
 rm libwpe-$LIBWPE_VERSION.tar.xz
@@ -30,29 +20,3 @@ wget https://wpewebkit.org/releases/wpewebkit-$WPEWEBKIT_VERSION.tar.xz
 tar -xf wpewebkit-$WPEWEBKIT_VERSION.tar.xz
 rm wpewebkit-$WPEWEBKIT_VERSION.tar.xz
 mv wpewebkit-$WPEWEBKIT_VERSION wpewebkit
-
-git clone --no-checkout "$GST_PLUGINS_BAD_REPOSITORY"
-pushd gst-plugins-bad
-git checkout "$GST_PLUGINS_BAD_CHECKOUT"
-popd
-
-git clone --no-checkout "$GST_PLUGINS_GOOD_REPOSITORY"
-pushd gst-plugins-good
-git checkout "$GST_PLUGINS_GOOD_CHECKOUT"
-popd
-
-git clone --no-checkout "$GST_PLUGINS_UGLY_REPOSITORY"
-pushd gst-plugins-ugly
-git checkout "$GST_PLUGINS_UGLY_CHECKOUT"
-popd
-
-git clone --no-checkout "$GST_LIBAV_REPOSITORY"
-pushd gst-libav
-git checkout "$GST_LIBAV_CHECKOUT"
-popd
-
-git clone --no-checkout "$GSTREAMER_VAAPI_REPOSITORY"
-pushd gstreamer-vaapi
-git checkout "$GSTREAMER_VAAPI_CHECKOUT"
-popd
-
