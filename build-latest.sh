@@ -6,7 +6,7 @@ docker pull ubuntu:21.04
 # Install dev dependencies
 docker build -t restreamio/gstreamer:dev-dependencies -f Dockerfile-dev-dependencies .
 # Download source code
-docker build -t restreamio/gstreamer:dev-downloaded -f Dockerfile-dev-downloaded .
+docker build -t restreamio/gstreamer:dev-downloaded -f Dockerfile-dev-mono-repo-downloaded .
 # Build dev image with source code included
 docker build -t restreamio/gstreamer:latest-dev-with-source -f Dockerfile-dev-with-source .
 # Build dev image with just binaries

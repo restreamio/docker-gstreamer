@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+# TODO: Migrate to mono-repo when 1.20 is released.
+
 if [[ -z "$1" ]]; then
     echo -e "Usage example:\n  $0 1.18.1"
     exit 1

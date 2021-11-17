@@ -1,0 +1,14 @@
+FROM restreamio/gstreamer:dev-dependencies
+
+ARG GSTREAMER_REPOSITORY=https://gitlab.freedesktop.org/philn/gstreamer.git
+ARG GSTREAMER_CHECKOUT=31aa652d4180b76d6692407099078aefa30acc58
+
+ARG LIBWPE_VERSION=1.10.1
+ARG WPEBACKEND_FDO_VERSION=1.10.0
+ARG WPEWEBKIT_VERSION=2.32.2
+
+COPY docker/build-gstreamer/download-mono-repo /download
+
+RUN ["/download"]
+
+COPY docker/build-gstreamer/compile-mono-repo /compile
