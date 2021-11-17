@@ -17,6 +17,7 @@ apt-get install -y --no-install-recommends \
   libunwind-dev \
   libdw-dev \
   libgmp-dev \
+  libgraphene-1.0-dev \
   libgsl-dev \
   libglib2.0-dev \
   flex \
