@@ -13,8 +13,8 @@ ARG LIBNICE_CHECKOUT=a0cfef727f6fdbc584514b6eefc6d9743874df97
 ARG GST_PLUGINS_BASE_REPOSITORY=https://gitlab.freedesktop.org/nazar-pc/gst-plugins-base.git
 ARG GST_PLUGINS_BASE_CHECKOUT=ff1483c5201ef74a0a3bf7f9aba017f28b183582
 
-ARG GST_PLUGINS_BAD_REPOSITORY=https://gitlab.freedesktop.org/nazar-pc/gst-plugins-bad.git
-ARG GST_PLUGINS_BAD_CHECKOUT=a4881f74c9d5e6fe29648bb1def668eb7f06eebb
+ARG GST_PLUGINS_BAD_REPOSITORY=https://gitlab.freedesktop.org/philn/gst-plugins-bad.git
+ARG GST_PLUGINS_BAD_CHECKOUT=02546967c2ed6f3610cb507d755b0073fb9c502b
 
 ARG GST_PLUGINS_GOOD_REPOSITORY=https://gitlab.freedesktop.org/nazar-pc/gst-plugins-good.git
 ARG GST_PLUGINS_GOOD_CHECKOUT=ea3f562cd783631ba0bea98e873aadf61ce69f10
