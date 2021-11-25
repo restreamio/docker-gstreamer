@@ -57,14 +57,24 @@ for repo in gstreamer libnice gst-plugins-base libwpe wpebackend-fdo wpewebkit g
     # TODO: Hack: `-D gupnp=disabled` is for libnice, because libgupnp-igd causes memory leaks
     # msdk=enabled is for gst-plugings-bad to include msdk elements
     # with_x11=no is for gstreamer-vaapi to exclude X11-related functionality (that would otherwise require extra dependencies)
+    MESON_OPTS=""
+    if [[ $repo == 'libnice' ]]; then
+      MESON_OPTS="-Dgupnp=disabled"
+    fi
+    if [[ $repo == 'gst-plugins-bad' ]]; then
+      MESON_OPTS="-Dmsdk=enabled"
+    fi
+    if [[ $repo == 'gstreamer-vaapi' ]]; then
+      MESON_OPTS="-Dwith_x11=no"
+    fi
     if [[ $DEBUG == 'true' ]]; then
       if [[ $OPTIMIZATIONS == 'true' ]]; then
-        meson build -D prefix=/usr -D gupnp=disabled -D msdk=enabled -D with_x11=no -D debug=true -D optimization=2
+        meson build -D prefix=/usr $MESON_OPTS -D debug=true -D optimization=2
       else
-        meson build -D prefix=/usr -D gupnp=disabled -D msdk=enabled -D with_x11=no -D debug=true
+        meson build -D prefix=/usr $MESON_OPTS -D debug=true
       fi
     else
-      meson build -D prefix=/usr -D gupnp=disabled -D msdk=enabled -D with_x11=no -D debug=false -D optimization=3 -D b_lto=true -D buildtype=release
+        meson build -D prefix=/usr $MESON_OPTS -D debug=false -D optimization=3 -D b_lto=true
     fi
   fi
   # This is needed for other plugins to be built properly
