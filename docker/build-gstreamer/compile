@@ -18,6 +18,7 @@ for repo in gstreamer libnice gst-plugins-base libwpe wpebackend-fdo wpewebkit g
           -DENABLE_ACCESSIBILITY=OFF \
           -DENABLE_WEBDRIVER=OFF \
           -DUSE_GSTREAMER_GL=OFF \
+          -DUSE_SOUP2=ON \
           -DCMAKE_BUILD_TYPE=Release \
           -GNinja ..
       else
@@ -28,6 +29,7 @@ for repo in gstreamer libnice gst-plugins-base libwpe wpebackend-fdo wpewebkit g
           -DENABLE_ACCESSIBILITY=OFF \
           -DENABLE_WEBDRIVER=OFF \
           -DUSE_GSTREAMER_GL=OFF \
+          -DUSE_SOUP2=ON \
           -DCMAKE_BUILD_TYPE=Debug \
           -GNinja ..
       fi
@@ -39,6 +41,7 @@ for repo in gstreamer libnice gst-plugins-base libwpe wpebackend-fdo wpewebkit g
         -DENABLE_ACCESSIBILITY=OFF \
         -DENABLE_WEBDRIVER=OFF \
         -DUSE_GSTREAMER_GL=OFF \
+        -DUSE_SOUP2=ON \
         -DCMAKE_BUILD_TYPE=Release \
         -GNinja ..
     fi
