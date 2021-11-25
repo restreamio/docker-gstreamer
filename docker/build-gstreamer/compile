@@ -3,6 +3,7 @@ set -e
 
 for repo in gstreamer libnice gst-plugins-base libwpe wpebackend-fdo wpewebkit gst-plugins-bad gst-plugins-good gst-plugins-ugly gst-libav gstreamer-vaapi; do
   pushd $repo
+  NINJA_OPTS=""
   # wpewebkit is cmake...
   if [[ $repo == 'wpewebkit' ]]; then
     mkdir build
@@ -46,6 +47,12 @@ for repo in gstreamer libnice gst-plugins-base libwpe wpebackend-fdo wpewebkit g
         -GNinja ..
     fi
     popd
+
+    # Relax CPU load, unified builds require a lot of RAM and can easily overload
+    # the machine when using all cores.
+    NCPU=$(nproc)
+    NINJA_OPTS="-j $(($NCPU/2))"
+
   else
     # TODO: Hack: `-D gupnp=disabled` is for libnice, because libgupnp-igd causes memory leaks
     # msdk=enabled is for gst-plugings-bad to include msdk elements
@@ -61,9 +68,9 @@ for repo in gstreamer libnice gst-plugins-base libwpe wpebackend-fdo wpewebkit g
     fi
   fi
   # This is needed for other plugins to be built properly
-  ninja -C build install
+  ninja $NINJA_OPTS -C build install
   # This is where we'll grab build artifacts from
-  DESTDIR=/compiled-binaries ninja -C build install
+  DESTDIR=/compiled-binaries ninja $NINJA_OPTS -C build install
 
   if [[ $repo == 'wpewebkit' ]]; then
     # It is too large for us to afford storing it unfortunately, ~16GiB as of writing this message
