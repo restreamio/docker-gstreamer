@@ -11,8 +11,8 @@ ARG WPEWEBKIT_VERSION=2.31.1
 ARG LIBNICE_REPOSITORY=https://gitlab.freedesktop.org/libnice/libnice.git
 ARG LIBNICE_CHECKOUT=caf9f1d8b1d4675c8c88f8f6fa04d3ff5e27f09a
 
-ARG GST_PLUGINS_BASE_REPOSITORY=https://gitlab.freedesktop.org/nazar-pc/gst-plugins-base.git
-ARG GST_PLUGINS_BASE_CHECKOUT=ba1971ab1e447bbbb5ef7d446e9310ac0458bee8
+ARG GST_PLUGINS_BASE_REPOSITORY=https://gitlab.freedesktop.org/philn/gst-plugins-base.git
+ARG GST_PLUGINS_BASE_CHECKOUT=07bb9ead49f555576dbc2e578d531d5b74619987
 
 ARG GST_PLUGINS_BAD_REPOSITORY=https://gitlab.freedesktop.org/nazar-pc/gst-plugins-bad.git
 ARG GST_PLUGINS_BAD_CHECKOUT=78aa6896e33f90aca8ed42fee9b3e0a861277e78
