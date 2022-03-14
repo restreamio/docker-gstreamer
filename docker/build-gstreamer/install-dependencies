@@ -29,6 +29,7 @@ apt-get install -y --no-install-recommends \
   libgl-dev \
   libgles-dev \
   libdrm-dev \
+  libgraphene-1.0-dev \
   libgudev-1.0-dev \
   libgbm-dev \
   libpng-dev \
