@@ -114,6 +114,7 @@ RUN \
         libavutil56 \
         libva2 \
         libmfx1 \
+        libva-wayland2 \
         intel-media-va-driver-non-free && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
