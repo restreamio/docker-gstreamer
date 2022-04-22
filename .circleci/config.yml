@@ -8,6 +8,8 @@ jobs:
       - image: cimg/base:stable
     resource_class: 2xlarge
     steps:
+      - setup_remote_docker:
+          version: 20.10.12
       - checkout
       - run:
           name: "Login to dockerhub"
