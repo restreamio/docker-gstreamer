@@ -3,17 +3,17 @@
 version: 2.1
 
 jobs:
-  say-hello:
+  build:
     docker:
       - image: cimg/base:stable
     resource_class: xlarge
     steps:
       - checkout
       - run:
-          name: "Say hello"
-          command: "ls"
+          name: "Login to dockerhub"
+          command: "echo $DOCKER_PWD | docker login -u $DOCKER_LOGIN --password-stdin"
 
 workflows:
-  say-hello-workflow:
+  build-workflow:
     jobs:
-      - say-hello
+      - build
