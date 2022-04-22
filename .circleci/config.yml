@@ -6,12 +6,18 @@ jobs:
   build:
     docker:
       - image: cimg/base:stable
-    resource_class: xlarge
+    resource_class: 2xlarge
     steps:
       - checkout
       - run:
           name: "Login to dockerhub"
           command: "echo $DOCKER_PWD | docker login -u $DOCKER_LOGIN --password-stdin"
+      - run:
+          name: "Build images"
+          command: "./build-latest.sh"
+      - run:
+          name: "Push images"
+          command: "./push-latest.sh"
 
 workflows:
   build-workflow:
