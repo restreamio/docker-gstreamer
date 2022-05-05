@@ -54,22 +54,23 @@ WPE_CMAKE_OPTS="-DCMAKE_INSTALL_PREFIX=/usr \
 if [[ $DEBUG == 'true' ]]; then
   if [[ $OPTIMIZATIONS == 'true' ]]; then
     # RelWithDebInfo is huge, hence just release, we're unlikely to actually debug it
-    cmake -DCMAKE_BUILD_TYPE=Release $WPE_CMAKE_OPTS ..
+    WPE_BUILD_TYPE=Release
   else
-    cmake -DCMAKE_BUILD_TYPE=Debug $WPE_CMAKE_OPTS ..
+    WPE_BUILD_TYPE=Debug
   fi
 else
-  cmake -DCMAKE_BUILD_TYPE=Release $WPE_CMAKE_OPTS ..
+  WPE_BUILD_TYPE=Release
 fi
+
+CC=clang CXX=clang++ cmake -DCMAKE_BUILD_TYPE=$WPE_BUILD_TYPE $WPE_CMAKE_OPTS ..
 popd
 
 # Relax CPU load, unified builds require a lot of RAM and can easily overload
 # the machine when using all cores.
 NCPU=$(nproc)
 NINJA_OPTS="-j $(($NCPU/2))"
+CC=clang CXX=clang++ ninja $NINJA_OPTS -C build install
 
-ninja $NINJA_OPTS -C build
-ninja $NINJA_OPTS -C build install
 # This is where we'll grab build artifacts from
 DESTDIR=/compiled-binaries ninja -C build install
 
