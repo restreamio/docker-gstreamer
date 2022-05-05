@@ -1,5 +1,7 @@
 FROM restreamio/gstreamer:dev-downloaded
 
+ARG WEBKIT_USE_SCCACHE=0
+
 ENV DEBUG=false
 ENV OPTIMIZATIONS=true
 

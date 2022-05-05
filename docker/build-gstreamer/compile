@@ -45,6 +45,11 @@ popd
 pushd wpewebkit
 mkdir build
 pushd build
+if [[ $WEBKIT_USE_SCCACHE == '1' ]]; then
+    export SCCACHE_CONF=/sccache.toml
+    export SCCACHE_SERVER_PORT=8888
+    sccache --start-server
+fi
 WPE_CMAKE_OPTS="-DCMAKE_INSTALL_PREFIX=/usr \
   -DPORT=WPE \
   -DENABLE_ACCESSIBILITY=OFF \
@@ -65,10 +70,15 @@ fi
 CC=clang CXX=clang++ cmake -DCMAKE_BUILD_TYPE=$WPE_BUILD_TYPE $WPE_CMAKE_OPTS ..
 popd
 
-# Relax CPU load, unified builds require a lot of RAM and can easily overload
-# the machine when using all cores.
-NCPU=$(nproc)
-NINJA_OPTS="-j $(($NCPU/2))"
+if [[ $SCCACHE_CONF != '' ]]; then
+  NINJA_OPTS="-j 45"
+else
+  # Relax CPU load, unified builds require a lot of RAM and can easily overload
+  # the machine when using all cores.
+  NCPU=$(nproc)
+  NINJA_OPTS="-j $(($NCPU/2))"
+fi
+
 CC=clang CXX=clang++ ninja $NINJA_OPTS -C build install
 
 # This is where we'll grab build artifacts from
