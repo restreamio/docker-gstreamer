@@ -2,8 +2,8 @@ FROM restreamio/gstreamer:dev-dependencies
 
 ARG GSTREAMER_REPOSITORY=https://gitlab.freedesktop.org/philn/gstreamer.git
 
-# 1.20-studio-rebase-220504 branch
-ARG GSTREAMER_CHECKOUT=17984f31cd7f28b8a15f055e24523f7f06c3f432
+# 1.20-studio-rebase-220511 branch
+ARG GSTREAMER_CHECKOUT=96c4412d838edb3a5e6db1f6476e3f0fa0dae83c
 
 ARG LIBWPE_VERSION=1.12.0
 ARG WPEBACKEND_FDO_VERSION=1.12.0
