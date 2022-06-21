@@ -96,4 +96,25 @@ ninja -C build install
 DESTDIR=/compiled-binaries ninja -C build install
 popd
 
+# Build the GStreamer CEF plugin
+pushd gstcefsrc
+GST_CEF_CMAKE_OPTS="-DCMAKE_INSTALL_PREFIX=/usr/cef -GNinja"
+if [[ $DEBUG == 'true' ]]; then
+    if [[ $OPTIMIZATIONS == 'true' ]]; then
+        # RelWithDebInfo doesn't seem supported.
+        GST_CEF_BUILD_TYPE=Release
+    else
+        GST_CEF_BUILD_TYPE=Debug
+    fi
+else
+    GST_CEF_BUILD_TYPE=Release
+fi
+mkdir build
+pushd build
+CC=clang CXX=clang++ cmake -DCMAKE_BUILD_TYPE=$GST_CEF_BUILD_TYPE $GST_CEF_CMAKE_OPTS ..
+DESTDIR=/compiled-binaries ninja install
+popd
+rm -fr build
+popd
+
 gst-inspect-1.0

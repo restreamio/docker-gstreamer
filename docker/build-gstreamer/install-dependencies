@@ -16,6 +16,12 @@ apt-get install -y --no-install-recommends \
   gcc \
   clang-$CLANG_VERSION \
   cmake \
+  libatk1.0-dev \
+  libatk-bridge2.0-dev \
+  libatspi2.0-dev \
+  libcups2-dev \
+  libxcomposite-dev \
+  libxdamage-dev \
   libunwind-dev \
   libdw-dev \
   libgmp-dev \

@@ -20,3 +20,8 @@ wget https://wpewebkit.org/releases/wpewebkit-$WPEWEBKIT_VERSION.tar.xz
 tar -xf wpewebkit-$WPEWEBKIT_VERSION.tar.xz
 rm wpewebkit-$WPEWEBKIT_VERSION.tar.xz
 mv wpewebkit-$WPEWEBKIT_VERSION wpewebkit
+
+git clone --no-checkout "$GSTREAMER_CEF_REPOSITORY"
+pushd gstcefsrc
+git checkout "$GSTREAMER_CEF_CHECKOUT"
+popd
