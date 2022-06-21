@@ -3,11 +3,14 @@ FROM restreamio/gstreamer:dev-dependencies
 ARG GSTREAMER_REPOSITORY=https://gitlab.freedesktop.org/philn/gstreamer.git
 
 # 1.20-studio-rebase-220504 branch
-ARG GSTREAMER_CHECKOUT=17984f31cd7f28b8a15f055e24523f7f06c3f432
+ARG GSTREAMER_CHECKOUT=64f78d1d561cc25d571a411c64ada98c1cb8aa2b
 
 ARG LIBWPE_VERSION=1.12.0
 ARG WPEBACKEND_FDO_VERSION=1.12.0
 ARG WPEWEBKIT_VERSION=2.36.1
+
+ARG GSTREAMER_CEF_REPOSITORY=https://github.com/centricular/gstcefsrc
+ARG GSTREAMER_CEF_CHECKOUT=6c4cff7437dc8a775d72d0db7a723acf4c9647d9
 
 COPY docker/sccache.toml /sccache.toml
 
