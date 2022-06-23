@@ -6,6 +6,11 @@ pushd gstreamer
 git checkout "$GSTREAMER_CHECKOUT"
 popd
 
+git clone --no-checkout "$GST_PLUGINS_RS_REPOSITORY"
+pushd gst-plugins-rs
+git checkout "$GST_PLUGINS_RS_CHECKOUT"
+popd
+
 wget https://wpewebkit.org/releases/libwpe-$LIBWPE_VERSION.tar.xz
 tar -xf libwpe-$LIBWPE_VERSION.tar.xz
 rm libwpe-$LIBWPE_VERSION.tar.xz

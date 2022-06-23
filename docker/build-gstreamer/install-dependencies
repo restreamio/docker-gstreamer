@@ -145,3 +145,4 @@ ln -s /usr/bin/clang++{-$CLANG_VERSION,}
 
 sccache --package-toolchain /usr/bin/clang-$CLANG_VERSION /toolchain-clang-$CLANG_VERSION.tar.gz
 
+wget -O- https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
