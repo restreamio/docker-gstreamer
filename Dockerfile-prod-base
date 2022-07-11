@@ -38,6 +38,7 @@ RUN \
         libxcomposite1 \
         libxdamage1 \
         libwayland-client0 \
+        libwayland-cursor0 \
         libwayland-egl1 \
         libwayland-server0 \
         libharfbuzz-icu0 \
