@@ -128,7 +128,8 @@ apt-get install -y --no-install-recommends \
   libva-dev \
   libmfx-dev \
   intel-media-va-driver-non-free \
-  libudev-dev
+  libudev-dev \
+  glibc-tools
 pip3 install meson ninja
 apt-get clean
 rm -rf /var/lib/apt/lists/*
