@@ -125,6 +125,6 @@ RUN \
         xvfb \
         intel-media-va-driver-non-free \
         libxrandr-dev \
-        glibc-tools && \
+        glibc-tools \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
