@@ -3,26 +3,6 @@ set -e
 
 source $HOME/.cargo/env
 
-# Compile GStreamer dependencies first.
-for repo in libwpe wpebackend-fdo; do
-  pushd $repo
-  if [[ $DEBUG == 'true' ]]; then
-    if [[ $OPTIMIZATIONS == 'true' ]]; then
-      meson build -D prefix=/usr -D buildtype=debugoptimized
-    else
-      meson build -D prefix=/usr -D buildtype=debug
-    fi
-  else
-    meson build -D prefix=/usr -D buildtype=release -D b_lto=true
-  fi
-
-  # This is needed for other plugins to be built properly
-  ninja -C build install
-  # This is where we'll grab build artifacts from
-  DESTDIR=/compiled-binaries ninja -C build install
-  popd
-done
-
 pushd gstreamer
 # TODO: Hack: `-D gupnp=disabled` is for libnice, because libgupnp-igd causes memory leaks
 # msdk=enabled is for gst-plugings-bad to include msdk elements
@@ -38,62 +18,6 @@ else
   meson build -D prefix=/usr $MESON_OPTIONS -D buildtype=release -D b_lto=true
 fi
 # This is needed for other plugins to be built properly
-ninja -C build install
-# This is where we'll grab build artifacts from
-DESTDIR=/compiled-binaries ninja -C build install
-popd
-
-
-# Compile WPEWebKit
-pushd wpewebkit
-mkdir build
-pushd build
-if [[ $WEBKIT_USE_SCCACHE == '1' ]]; then
-    export SCCACHE_CONF=/sccache.toml
-    export SCCACHE_SERVER_PORT=8888
-    sccache --start-server
-fi
-WPE_CMAKE_OPTS="-DCMAKE_INSTALL_PREFIX=/usr \
-  -DPORT=WPE \
-  -DENABLE_ACCESSIBILITY=OFF \
-  -DENABLE_WEBDRIVER=OFF \
-  -DUSE_SOUP2=ON \
-  -DENABLE_JOURNALD_LOG=OFF -GNinja"
-if [[ $DEBUG == 'true' ]]; then
-  if [[ $OPTIMIZATIONS == 'true' ]]; then
-    # RelWithDebInfo is huge, hence just release, we're unlikely to actually debug it
-    WPE_BUILD_TYPE=Release
-  else
-    WPE_BUILD_TYPE=Debug
-  fi
-else
-  WPE_BUILD_TYPE=Release
-fi
-
-CC=clang CXX=clang++ cmake -DCMAKE_BUILD_TYPE=$WPE_BUILD_TYPE $WPE_CMAKE_OPTS ..
-popd
-
-if [[ $SCCACHE_CONF != '' ]]; then
-  NINJA_OPTS="-j 45"
-else
-  # Relax CPU load, unified builds require a lot of RAM and can easily overload
-  # the machine when using all cores.
-  NCPU=$(nproc)
-  NINJA_OPTS="-j $(($NCPU/2))"
-fi
-
-CC=clang CXX=clang++ ninja $NINJA_OPTS -C build install
-
-# This is where we'll grab build artifacts from
-DESTDIR=/compiled-binaries ninja -C build install
-
-# It is too large for us to afford storing it unfortunately, ~16GiB as of writing this message
-rm -rf build
-popd
-
-# Re-build GStreamer with WPE enabled
-pushd gstreamer
-meson build --reconfigure -Dgst-plugins-bad:wpe=enabled
 ninja -C build install
 # This is where we'll grab build artifacts from
 DESTDIR=/compiled-binaries ninja -C build install
