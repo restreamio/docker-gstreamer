@@ -1,4 +1,4 @@
-FROM ubuntu:21.04
+FROM ubuntu:20.04
 
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -14,7 +14,7 @@ RUN \
         libunwind8 \
         libdw1 \
         libgmp10 \
-        libgsl25 \
+        libgsl23 \
         libglib2.0-0 \
         libcap2 \
         libcups2 \
@@ -69,7 +69,7 @@ RUN \
         libflite1 \
         libssl1.1 \
         ladspa-sdk \
-        libfdk-aac2 \
+        libfdk-aac1 \
         libfluidsynth2 \
         libgsm1 \
         libkate1 \
@@ -81,7 +81,7 @@ RUN \
         libmjpegutils-2.1-0 \
         libmpcdec6 \
         libdvdnav4 \
-        libdvdread8 \
+        libdvdread7 \
         librsvg2-2 \
         librtmp1 \
         libsbc1 \
@@ -95,9 +95,9 @@ RUN \
         libwebrtc-audio-processing1 \
         libofa0 \
         libzvbi0 \
-        libopenexr25 \
+        libopenexr24 \
         libwildmidi2 \
-        libx265-192 \
+        libx265-179 \
         libzbar0 \
         wayland-protocols \
         libaa1 \
@@ -112,7 +112,7 @@ RUN \
         libtwolame0 \
         libwavpack1 \
         liba52-0.7.4 \
-        libx264-160 \
+        libx264-155 \
         libopencore-amrnb0 \
         libopencore-amrwb0 \
         libmpeg2-4 \
