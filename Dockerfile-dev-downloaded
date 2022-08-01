@@ -3,7 +3,7 @@ FROM restreamio/gstreamer:dev-dependencies
 ARG GSTREAMER_REPOSITORY=https://gitlab.freedesktop.org/philn/gstreamer.git
 
 # 1.20-studio-rebase-220504 branch
-ARG GSTREAMER_CHECKOUT=17984f31cd7f28b8a15f055e24523f7f06c3f432
+ARG GSTREAMER_CHECKOUT=bc9382be3846f9b155580610ff5d2dcbbd9c8849
 
 ARG GST_PLUGINS_RS_REPOSITORY=https://gitlab.freedesktop.org/gstreamer/gst-plugins-rs.git
 ARG GST_PLUGINS_RS_CHECKOUT=c6238a6a9f35c34e8bd4f8f4ccc727a5f8c0e6b1
