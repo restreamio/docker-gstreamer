@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM ubuntu:21.04
 
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -14,7 +14,7 @@ RUN \
         libunwind8 \
         libdw1 \
         libgmp10 \
-        libgsl27 \
+        libgsl25 \
         libglib2.0-0 \
         libcap2 \
         libcups2 \
@@ -45,7 +45,7 @@ RUN \
         libegl1 \
         libepoxy0 \
         libgcrypt20 \
-        libwebp7 \
+        libwebp6 \
         libwebpdemux2 \
         libwebpmux3 \
         libopenjp2-7 \
@@ -59,7 +59,7 @@ RUN \
         libass9 \
         libchromaprint1 \
         libcurl3-gnutls \
-        libaom3 \
+        libaom0 \
         libbz2-1.0 \
         liblcms2-2 \
         libbs2b0 \
@@ -67,9 +67,10 @@ RUN \
         libfaac0 \
         libfaad2 \
         libflite1 \
-        libssl3 \
+        libssl1.1 \
         ladspa-sdk \
         libfdk-aac2 \
+        libfluidsynth2 \
         libgsm1 \
         libkate1 \
         libgme0 \
@@ -96,7 +97,7 @@ RUN \
         libzvbi0 \
         libopenexr25 \
         libwildmidi2 \
-        libx265-199 \
+        libx265-192 \
         libzbar0 \
         wayland-protocols \
         libaa1 \
@@ -104,14 +105,14 @@ RUN \
         libcaca0 \
         libdv4 \
         libmpg123-0 \
-        libvpx7 \
+        libvpx6 \
         libshout3 \
         libspeex1 \
         libtag1v5 \
         libtwolame0 \
         libwavpack1 \
         liba52-0.7.4 \
-        libx264-163 \
+        libx264-160 \
         libopencore-amrnb0 \
         libopencore-amrwb0 \
         libmpeg2-4 \
