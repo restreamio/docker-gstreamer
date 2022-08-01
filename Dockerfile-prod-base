@@ -123,7 +123,6 @@ RUN \
         libmfx1 \
         libva-wayland2 \
         xvfb \
-        intel-media-va-driver-non-free \
-        libxrandr-dev && \
+        intel-media-va-driver-non-free && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
