@@ -93,7 +93,7 @@ apt-get install -y --no-install-recommends \
   libsndfile1-dev \
   libsoundtouch-dev \
   libspandsp-dev \
-  libsrt-gnutls-dev \
+  gnutls-dev \
   libsrtp2-dev \
   libvo-aacenc-dev \
   libvo-amrwbenc-dev \
@@ -128,8 +128,7 @@ apt-get install -y --no-install-recommends \
   libva-dev \
   libmfx-dev \
   intel-media-va-driver-non-free \
-  libudev-dev \
-  glibc-tools
+  libudev-dev libnss3 libnspr4
 pip3 install meson ninja
 apt-get clean
 rm -rf /var/lib/apt/lists/*
