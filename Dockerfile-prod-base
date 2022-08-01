@@ -124,7 +124,6 @@ RUN \
         libva-wayland2 \
         xvfb \
         intel-media-va-driver-non-free \
-        libxrandr-dev \
-        glibc-tools \
+        libxrandr-dev && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
