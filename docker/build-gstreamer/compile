@@ -43,18 +43,6 @@ ninja -C build install
 DESTDIR=/compiled-binaries ninja -C build install
 popd
 
-# Compile gst-plugins-rs
-pushd gst-plugins-rs
-CARGO_BUILD_TYPE="--release"
-CARGO_OUT_DIR="release"
-if [[ $DEBUG == 'true' ]]; then
-    CARGO_BUILD_TYPE=""
-    CARGO_OUT_DIR="debug"
-fi
-cargo build $CARGO_BUILD_TYPE --manifest-path video/videofx/Cargo.toml
-cp target/$CARGO_OUT_DIR/libgst*.so /compiled-binaries/usr/lib/x86_64-linux-gnu/gstreamer-1.0/
-rm -fr target
-popd
 
 # Compile WPEWebKit
 pushd wpewebkit
