@@ -88,7 +88,7 @@ RUN \
         libsndfile1 \
         libsoundtouch1 \
         libspandsp2 \
-        libsrt1.4-openssl \
+        libsrt1 \
         libsrtp2-1 \
         libvo-aacenc0 \
         libvo-amrwbenc0 \
@@ -124,6 +124,7 @@ RUN \
         libmfx1 \
         libva-wayland2 \
         xvfb \
+        libnss3 libnspr4 \
         intel-media-va-driver-non-free && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
