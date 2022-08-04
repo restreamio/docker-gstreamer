@@ -110,7 +110,6 @@ apt-get install -y --no-install-recommends \
   libcaca-dev \
   libdv4-dev \
   libmpg123-dev \
-  libvpx-dev \
   libshout3-dev \
   libspeex-dev \
   libtag1-dev \
@@ -127,6 +126,7 @@ apt-get install -y --no-install-recommends \
   libavutil-dev \
   libva-dev \
   libmfx-dev \
+  yasm \
   intel-media-va-driver-non-free \
   libudev-dev \
   glibc-tools

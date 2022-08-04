@@ -15,6 +15,9 @@ ARG WPEWEBKIT_VERSION=2.36.1
 ARG GSTREAMER_CEF_REPOSITORY=https://github.com/centricular/gstcefsrc
 ARG GSTREAMER_CEF_CHECKOUT=9c97fbd9abf0e7926819ffbad6a26a2e505bae84
 
+ARG VPX_REPOSITORY=https://chromium.googlesource.com/webm/libvpx
+ARG VPX_CHECKOUT=v1.9.0
+
 COPY docker/sccache.toml /sccache.toml
 
 COPY docker/build-gstreamer/download /download

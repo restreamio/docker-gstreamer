@@ -104,7 +104,6 @@ RUN \
         libcaca0 \
         libdv4 \
         libmpg123-0 \
-        libvpx7 \
         libshout3 \
         libspeex1 \
         libtag1v5 \

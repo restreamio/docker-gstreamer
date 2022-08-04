@@ -23,6 +23,28 @@ for repo in libwpe wpebackend-fdo; do
   popd
 done
 
+pushd libvpx
+./configure --prefix="/usr" \
+            --libdir="/usr/lib/x86_64-linux-gnu" \
+            --enable-pic \
+            --enable-optimizations \
+            --target="x86_64-linux-gcc" \
+            --disable-static \
+            --enable-shared \
+            --enable-vp8 \
+            --enable-vp9 \
+            --enable-libs \
+            --disable-install-docs \
+            --disable-examples \
+            --enable-vp9-highbitdepth
+NCPU=$(nproc)
+make -j$(($NCPU/2))
+# This is needed for the GStreamer build.
+make install
+# This is where we'll grab build artifacts from.
+make DESTDIR=/compiled-binaries install
+popd
+
 pushd gstreamer
 # TODO: Hack: `-D gupnp=disabled` is for libnice, because libgupnp-igd causes memory leaks
 # msdk=enabled is for gst-plugings-bad to include msdk elements

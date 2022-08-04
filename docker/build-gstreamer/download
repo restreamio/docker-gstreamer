@@ -30,3 +30,8 @@ git clone --no-checkout "$GSTREAMER_CEF_REPOSITORY"
 pushd gstcefsrc
 git checkout "$GSTREAMER_CEF_CHECKOUT"
 popd
+
+git clone --no-checkout "$VPX_REPOSITORY"
+pushd libvpx
+git checkout "$VPX_CHECKOUT"
+popd
