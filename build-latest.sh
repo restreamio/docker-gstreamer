@@ -12,6 +12,11 @@ fi
 docker pull ubuntu:22.04
 # Install dev dependencies
 docker build -t restreamio/gstreamer:dev-dependencies -f Dockerfile-dev-dependencies .
+
+docker build -t restreamio/gstreamer:cef-dependencies -f Dockerfile-cef-dependencies .
+docker build -t restreamio/gstreamer:cef -f Dockerfile-cef .
+
+
 # Download source code
 docker build -t restreamio/gstreamer:dev-downloaded -f Dockerfile-dev-downloaded .
 # Build dev image with source code included

@@ -1,0 +1,5 @@
+FROM ubuntu:22.04
+
+COPY docker/install-cef-dependencies /
+
+RUN ["/install-cef-dependencies"]

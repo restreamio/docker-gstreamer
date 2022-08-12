@@ -1,0 +1,10 @@
+FROM restreamio/gstreamer:cef-dependencies
+
+ARG CEF_BRANCH=5060
+
+COPY docker/compile-cef /compile
+
+WORKDIR /
+COPY --from=restreamio/gstreamer:cef-dependencies /cef/automate-git.py .
+RUN ["/compile"]
+

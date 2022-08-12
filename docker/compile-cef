@@ -1,0 +1,9 @@
+#!/bin/bash
+set -e
+
+#wget https://bitbucket.org/chromiumembedded/cef/raw/master/tools/automate/automate-git.py
+export GN_DEFINES="ffmpeg_branding=Chrome proprietary_codecs=true is_official_build=true use_sysroot=true use_allocator=none symbol_level=1 is_cfi=false use_thin_lto=false"
+export CEF_ARCHIVE_FORMAT=tar.bz2
+python3 /automate-git.py --download-dir=/cef-build --branch=5060 --no-update --force-clean --build-target=cefsimple --x64-build
+#mv /cef-build/chromium/src/cef/binary_distrib /compiled-binaries/cef
+# --minimal-distrib --client-distrib

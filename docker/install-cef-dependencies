@@ -1,0 +1,44 @@
+#!/bin/bash
+set -e
+
+export DEBIAN_FRONTEND=noninteractive
+
+apt-get update
+apt-get dist-upgrade -y
+apt-get install -y --no-install-recommends \
+  git \
+  wget \
+  python3 \
+  python3-pip \
+  lsb-release
+pip3 install ninja
+
+export CHROMIUM_VERSION=106.0.5226.1
+wget -O- "https://chromium.googlesource.com/chromium/src/+/refs/tags/${CHROMIUM_VERSION}/build/install-build-deps.sh?format=TEXT" | base64 -d | sed 's/snapcraft/no-snapcraft/g' > install-cef-build-deps.sh
+chmod 755 install-cef-build-deps.sh
+
+# The install script expects sudo, so make a placeholder that transparently forwards commands.
+if type sudo 2>/dev/null; then
+    echo "The sudo command already exists... Skipping.";
+else
+    echo -e "#!/bin/bash\n\${@}" > /usr/sbin/sudo;
+    chmod +x /usr/sbin/sudo;
+fi
+
+# Remove the "Installing locales" step which fails with sed errors.
+# TODO: This trims all the way to end-of-file. Fix the sed error or
+# add a more nuanced approach in the future if necessary.
+line_num="$(grep -n 'echo \"Installing locales.\"' install-cef-build-deps.sh | head -n 1 | cut -d: -f1)"
+sed -i "${line_num},\$ d" install-cef-build-deps.sh
+
+./install-cef-build-deps.sh --no-chromeos-fonts --no-nacl --no-prompt --unsupported
+
+apt-get purge -y --auto-remove
+rm -rf /var/lib/apt/lists/*
+
+wget https://bitbucket.org/chromiumembedded/cef/raw/master/tools/automate/automate-git.py
+export CEF_ARCHIVE_FORMAT=tar.bz2
+python3 automate-git.py --download-dir=/cef-build --branch=5060 --no-distrib --no-build
+
+mkdir -p /cef
+cp automate-git.py /cef
