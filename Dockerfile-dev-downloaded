@@ -6,7 +6,7 @@ ARG GSTREAMER_REPOSITORY=https://gitlab.freedesktop.org/philn/gstreamer.git
 ARG GSTREAMER_CHECKOUT=7278621f3d1534cdf9cf95dc335883182661c8b9
 
 ARG GSTREAMER_CEF_REPOSITORY=https://github.com/centricular/gstcefsrc
-ARG GSTREAMER_CEF_CHECKOUT=8d499495dd79cc0bf9a38ae82b03e374d78f68ae
+ARG GSTREAMER_CEF_CHECKOUT=444e84264869cf668fe2cb1d4d9b4717f49ae37c
 
 COPY docker/sccache.toml /sccache.toml
 
