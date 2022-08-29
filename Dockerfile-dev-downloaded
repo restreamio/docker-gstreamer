@@ -8,6 +8,8 @@ ARG GSTREAMER_CHECKOUT=c7900c9d707d2cec2f275bb5a3e80823b8b148db
 ARG GSTREAMER_CEF_REPOSITORY=https://github.com/centricular/gstcefsrc
 ARG GSTREAMER_CEF_CHECKOUT=444e84264869cf668fe2cb1d4d9b4717f49ae37c
 
+COPY docker/cef-config.sh /.cef-config.sh
+
 COPY docker/sccache.toml /sccache.toml
 
 COPY docker/build-gstreamer/download /download
