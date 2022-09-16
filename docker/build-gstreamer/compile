@@ -36,4 +36,7 @@ DESTDIR=/compiled-binaries ninja -C build install
 rm -fr build third_party
 popd
 
+chown root:root /compiled-binaries/usr/cef/chrome-sandbox
+chmod 4755 /compiled-binaries/usr/cef/chrome-sandbox
+
 gst-inspect-1.0
