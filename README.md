@@ -13,6 +13,7 @@ Following components are present:
 * gstreamer-vaapi
 * libnice (newer version from git)
 * WPE WebKit (newer version from upstream release)
+* gstcefsrc
 
 GStreamer and components are tracking upstream master branches (with minor fixes on top) and are usually updated a few times a month.
 There are also builds of stable upstream releases available as well.
@@ -47,10 +48,14 @@ variables.
 Builds use Restream-specific patches by default, but there are also vanilla upstream builds available.
 
 There are 4 kinds of images pushed to Docker Hub:
-* restreamio/gstreamer:latest-dev-with-source - includes unoptimized build with debug symbols and even source code it was built with
-* restreamio/gstreamer:latest-dev - same as above, but without source code for development purposes
-* restreamio/gstreamer:latest-prod - optimized (`-O3` and `LTO`) build without debug symbols for production purposes
-* restreamio/gstreamer:latest-prod-dbg - optimized (`-O2` only) build with debug symbols included for production purposes with better debugging experience
+* restreamio/gstreamer:x86_64-latest-dev-with-source - includes unoptimized build with debug symbols and even source code it was built with
+* restreamio/gstreamer:x86_64-latest-dev - same as above, but without source code for development purposes
+* restreamio/gstreamer:x86_64-latest-prod - optimized (`-O3` and `LTO`) build without debug symbols for production purposes
+* restreamio/gstreamer:x86_64-latest-prod-dbg - optimized (`-O2` only) build with debug symbols included for production purposes with better debugging experience
+
+For Linux/ARM64 builds, replace `x86_64` with `aarch64` in the Docker tags. For
+further convenience, multi-arch images aggregating both builds are available as
+well, just remove the `$ARCH-` prefix from docker labels.
 
 There are also above tags prefixed with build date for stable reference.
 

@@ -5,18 +5,21 @@ DATE=$(date -u +"%Y-%m-%dT%H-%M-%SZ")
 
 echo $DATE
 
-docker push restreamio/gstreamer:latest-dev-with-source
-docker tag restreamio/gstreamer:latest-dev-with-source restreamio/gstreamer:$DATE-dev-with-source
-docker push restreamio/gstreamer:$DATE-dev-with-source
+ARCH=$1
+TAG_BASENAME="restreamio/gstreamer:$ARCH"
 
-docker push restreamio/gstreamer:latest-dev
-docker tag restreamio/gstreamer:latest-dev restreamio/gstreamer:$DATE-dev
-docker push restreamio/gstreamer:$DATE-dev
+docker push $TAG_BASENAME-latest-dev-with-source
+docker tag $TAG_BASENAME-latest-dev-with-source $TAG_BASENAME-$DATE-dev-with-source
+docker push $TAG_BASENAME-$DATE-dev-with-source
 
-docker push restreamio/gstreamer:latest-prod
-docker tag restreamio/gstreamer:latest-prod restreamio/gstreamer:$DATE-prod
-docker push restreamio/gstreamer:$DATE-prod
+docker push $TAG_BASENAME-latest-dev
+docker tag $TAG_BASENAME-latest-dev $TAG_BASENAME-$DATE-dev
+docker push $TAG_BASENAME-$DATE-dev
 
-docker push restreamio/gstreamer:latest-prod-dbg
-docker tag restreamio/gstreamer:latest-prod-dbg restreamio/gstreamer:$DATE-prod-dbg
-docker push restreamio/gstreamer:$DATE-prod-dbg
+docker push $TAG_BASENAME-latest-prod
+docker tag $TAG_BASENAME-latest-prod $TAG_BASENAME-$DATE-prod
+docker push $TAG_BASENAME-$DATE-prod
+
+docker push $TAG_BASENAME-latest-prod-dbg
+docker tag $TAG_BASENAME-latest-prod-dbg $TAG_BASENAME-$DATE-prod-dbg
+docker push $TAG_BASENAME-$DATE-prod-dbg

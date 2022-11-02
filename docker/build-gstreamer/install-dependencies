@@ -126,24 +126,35 @@ apt-get install -y --no-install-recommends \
   libavformat-dev \
   libavutil-dev \
   libva-dev \
-  libmfx-dev \
-  intel-media-va-driver-non-free \
   libudev-dev \
   glibc-tools
 pip3 install meson ninja
+
+ARCH=$(dpkg --print-architecture)
+if [[ $ARCH == "amd64" ]]; then
+   apt-get install -y --no-install-recommends \
+     libmfx-dev \
+     intel-media-va-driver-non-free
+fi
+
 apt-get clean
 rm -rf /var/lib/apt/lists/*
 
-# SCCache can be used to speed-up WPE compilation. You need cloud builders setup though.
-export SCCACHE_VERSION="0.2.14"
-wget https://github.com/mozilla/sccache/releases/download/$SCCACHE_VERSION/sccache-$SCCACHE_VERSION-x86_64-unknown-linux-musl.tar.gz
-tar xf sccache-$SCCACHE_VERSION-x86_64-unknown-linux-musl.tar.gz
-mv sccache-$SCCACHE_VERSION-x86_64-unknown-linux-musl/sccache /usr/bin
-rm -rf sccache-$SCCACHE_VERSION-x86_64-unknown-linux-musl
+# SCCache can be used to speed-up WPE compilation. You need cloud builders setup
+# though. SCCache binaries are available for arm64 but don't support toolchain
+# packaging, so skip this when building on arm64.
+if [[ $ARCH == "amd64" ]]; then
+  MACHINE=$(uname -m)
+  export SCCACHE_VERSION="0.2.14"
+  wget https://github.com/mozilla/sccache/releases/download/$SCCACHE_VERSION/sccache-$SCCACHE_VERSION-$MACHINE-unknown-linux-musl.tar.gz
+  tar xf sccache-$SCCACHE_VERSION-$MACHINE-unknown-linux-musl.tar.gz
+  mv sccache-$SCCACHE_VERSION-$MACHINE-unknown-linux-musl/sccache /usr/bin
+  rm -rf sccache-$SCCACHE_VERSION-$MACHINE-unknown-linux-musl
 
-ln -s /usr/bin/clang{-$CLANG_VERSION,}
-ln -s /usr/bin/clang++{-$CLANG_VERSION,}
+  ln -s /usr/bin/clang{-$CLANG_VERSION,}
+  ln -s /usr/bin/clang++{-$CLANG_VERSION,}
 
-sccache --package-toolchain /usr/bin/clang-$CLANG_VERSION /toolchain-clang-$CLANG_VERSION.tar.gz
+  sccache --package-toolchain /usr/bin/clang-$CLANG_VERSION /toolchain-clang-$CLANG_VERSION.tar.gz
+fi
 
 wget -O- https://sh.rustup.rs | sh -s -- -y --default-toolchain stable

@@ -8,19 +8,37 @@ else
     echo > docker/sccache.toml
 fi
 
+ARCH=$1
+
+TAG_BASENAME="restreamio/gstreamer:$ARCH"
+
+docker_build() {
+    local docker_file="Dockerfile-$1.in"
+    echo "Building from $docker_file"
+    sed "s/\$TARGET_ARCH/$ARCH/g" $docker_file > Dockerfile-tmp
+    docker build -t $TAG_BASENAME-$1 -f Dockerfile-tmp .
+    rm -f Dockerfile-tmp
+}
+
 # Make sure to always have fresh base image
 docker pull ubuntu:22.04
 # Install dev dependencies
-docker build -t restreamio/gstreamer:dev-dependencies -f Dockerfile-dev-dependencies .
+docker build -t $TAG_BASENAME-dev-dependencies -f Dockerfile-dev-dependencies .
+
 # Download source code
-docker build -t restreamio/gstreamer:dev-downloaded -f Dockerfile-dev-downloaded .
+docker_build dev-downloaded
+
 # Build dev image with source code included
-docker build --build-arg WEBKIT_USE_SCCACHE=$WEBKIT_USE_SCCACHE -t restreamio/gstreamer:latest-dev-with-source -f Dockerfile-dev-with-source .
+docker_build latest-dev-with-source
+
 # Build dev image with just binaries
-docker build -t restreamio/gstreamer:latest-dev -f Dockerfile-dev .
+docker_build latest-dev
+
 # Build base production image with necessary dependencies
-docker build -t restreamio/gstreamer:prod-base -f Dockerfile-prod-base .
+docker_build prod-base
+
 # Build production image optimized binaries and no debug symbols (-O3 LTO)
-docker build --build-arg WEBKIT_USE_SCCACHE=$WEBKIT_USE_SCCACHE -t restreamio/gstreamer:latest-prod -f Dockerfile-prod .
+docker_build latest-prod
+
 # Build production image optimized binaries and debug symbols
-docker build --build-arg WEBKIT_USE_SCCACHE=$WEBKIT_USE_SCCACHE -t restreamio/gstreamer:latest-prod-dbg -f Dockerfile-prod-dbg .
+docker_build latest-prod-dbg

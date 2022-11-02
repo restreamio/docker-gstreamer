@@ -2,6 +2,8 @@
 # See: https://circleci.com/docs/2.0/configuration-reference
 version: 2.1
 
+# TODO: arm64 build jobs.
+
 jobs:
   build:
     machine:
@@ -14,10 +16,10 @@ jobs:
           command: "echo $DOCKER_PWD | docker login -u $DOCKER_LOGIN --password-stdin"
       - run:
           name: "Build images"
-          command: "./build-latest.sh"
+          command: "./build-latest.sh amd64"
       - run:
           name: "Push images"
-          command: "./push-latest.sh"
+          command: "./push-latest.sh amd64"
 
 workflows:
   build-workflow:

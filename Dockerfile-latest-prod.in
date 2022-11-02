@@ -1,4 +1,4 @@
-FROM restreamio/gstreamer:dev-downloaded
+FROM restreamio/gstreamer:$TARGET_ARCH-dev-downloaded
 
 ARG WEBKIT_USE_SCCACHE=0
 
@@ -7,6 +7,6 @@ ENV OPTIMIZATIONS=true
 
 RUN ["/compile"]
 
-FROM restreamio/gstreamer:prod-base
+FROM restreamio/gstreamer:$TARGET_ARCH-prod-base
 
 COPY --from=0 /compiled-binaries /

@@ -7,7 +7,13 @@ pushd gstreamer
 # TODO: Hack: `-D gupnp=disabled` is for libnice, because libgupnp-igd causes memory leaks
 # msdk=enabled is for gst-plugings-bad to include msdk elements
 # with_x11=no is for gstreamer-vaapi to exclude X11-related functionality (that would otherwise require extra dependencies)
-MESON_OPTIONS="-Dvaapi=enabled -Dgpl=enabled -Dexamples=disabled -Dtests=disabled -Ddoc=disabled -Dqt5=disabled -Dpython=disabled -Dges=disabled -Ddevtools=disabled -Dintrospection=disabled -Dlibnice:gupnp=disabled -Dgst-plugins-bad:msdk=enabled -Dgstreamer-vaapi:with_x11=no"
+MESON_OPTIONS="-Dvaapi=enabled -Dgpl=enabled -Dgst-examples=disabled -Dexamples=disabled -Dtests=disabled -Ddoc=disabled -Dqt5=disabled -Dpython=disabled -Dges=disabled -Ddevtools=disabled -Dintrospection=disabled -Dlibnice:gupnp=disabled -Dgstreamer-vaapi:with_x11=no"
+
+ARCH=$(dpkg --print-architecture)
+if [[ $ARCH == "amd64" ]]; then
+    MESON_OPTIONS="$MESON_OPTIONS -Dgst-plugins-bad:msdk=enabled "
+fi
+
 if [[ $DEBUG == 'true' ]]; then
   if [[ $OPTIMIZATIONS == 'true' ]]; then
     meson build -D prefix=/usr $MESON_OPTIONS -D buildtype=debugoptimized
@@ -31,7 +37,7 @@ GST_CEF_CMAKE_OPTS="-DCMAKE_INSTALL_PREFIX=/usr/cef -GNinja -DCEF_BUILDS_HOMEPAG
 # TODO: Build CEF Debug artifacts as well.
 GST_CEF_BUILD_TYPE=Release
 
-CC=clang CXX=clang++ cmake -DCMAKE_BUILD_TYPE=$GST_CEF_BUILD_TYPE $GST_CEF_CMAKE_OPTS -B build -S .
+cmake -DCMAKE_BUILD_TYPE=$GST_CEF_BUILD_TYPE $GST_CEF_CMAKE_OPTS -B build -S .
 DESTDIR=/compiled-binaries ninja -C build install
 rm -fr build third_party
 popd
