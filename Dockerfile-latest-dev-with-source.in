@@ -1,4 +1,4 @@
-FROM restreamio/gstreamer:dev-downloaded
+FROM restreamio/gstreamer:$TARGET_ARCH-dev-downloaded
 
 ARG WEBKIT_USE_SCCACHE=0
 

@@ -1,4 +1,4 @@
-FROM restreamio/gstreamer:dev-dependencies
+FROM restreamio/gstreamer:$TARGET_ARCH-dev-dependencies
 
 ARG GSTREAMER_REPOSITORY=https://gitlab.freedesktop.org/philn/gstreamer.git
 
@@ -6,7 +6,7 @@ ARG GSTREAMER_REPOSITORY=https://gitlab.freedesktop.org/philn/gstreamer.git
 ARG GSTREAMER_CHECKOUT=3cbbd3addcf5dd1f88ab595a5562d16ee975c35d
 
 ARG GSTREAMER_CEF_REPOSITORY=https://github.com/centricular/gstcefsrc
-ARG GSTREAMER_CEF_CHECKOUT=911ba24b6019330b521b0f543045053cd092a9f4
+ARG GSTREAMER_CEF_CHECKOUT=cce144d984e70cc88f4624390419171fea6ca8ee
 
 COPY docker/cef-config.sh /.cef-config.sh
 
