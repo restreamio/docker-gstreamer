@@ -8,7 +8,7 @@ else
     echo > docker/sccache.toml
 fi
 
-ARCH=$1
+ARCH=$(uname -m)
 
 TAG_BASENAME="restreamio/gstreamer:$ARCH"
 

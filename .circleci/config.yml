@@ -2,10 +2,25 @@
 # See: https://circleci.com/docs/2.0/configuration-reference
 version: 2.1
 
-# TODO: arm64 build jobs.
+defaults: &defaults
+  working_directory: /tmp/docker-gst-ci
 
 jobs:
-  build:
+  init:
+    <<: *defaults
+    machine:
+      image: ubuntu-2004:current
+    resource_class: xlarge
+    steps:
+      - checkout
+      - run: mkdir -p workspace
+      - run: echo "export DATE=`date -u +\"%Y-%m-%dT%H-%M-%SZ\"`" > workspace/env-vars
+      - persist_to_workspace:
+          root: workspace
+          paths:
+              - env-vars
+  amd64-build:
+    <<: *defaults
     machine:
       image: ubuntu-2004:current
     resource_class: xlarge
@@ -14,14 +29,70 @@ jobs:
       - run:
           name: "Login to dockerhub"
           command: "echo $DOCKER_PWD | docker login -u $DOCKER_LOGIN --password-stdin"
+      - attach_workspace:
+          at: /tmp/docker-gst-ci/workspace
+      - run: cat workspace/env-vars >> $BASH_ENV
       - run:
           name: "Build images"
-          command: "./build-latest.sh amd64"
+          command: "./build-latest.sh"
       - run:
           name: "Push images"
-          command: "./push-latest.sh amd64"
+          command: "./push-latest.sh"
+      - persist_to_workspace:
+          root: workspace
+          paths:
+            - docker-tag-basename-x86_64.txt
+  arm64-build:
+    <<: *defaults
+    machine:
+      image: ubuntu-2004:current
+    resource_class: arm.xlarge
+    steps:
+      - checkout
+      - run:
+          name: "Login to dockerhub"
+          command: "echo $DOCKER_PWD | docker login -u $DOCKER_LOGIN --password-stdin"
+      - attach_workspace:
+          at: /tmp/docker-gst-ci/workspace
+      - run: cat workspace/env-vars >> $BASH_ENV
+      - run:
+          name: "Build images"
+          command: "./build-latest.sh"
+      - run:
+          name: "Push images"
+          command: "./push-latest.sh"
+      - persist_to_workspace:
+          root: workspace
+          paths:
+            - docker-tag-basename-aarch64.txt
+  aggregate-images:
+    <<: *defaults
+    machine:
+      image: ubuntu-2004:current
+    resource_class: xlarge
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/docker-gst-ci/workspace
+      - run: cat workspace/env-vars >> $BASH_ENV
+      - run:
+          name: "Login to dockerhub"
+          command: "echo $DOCKER_PWD | docker login -u $DOCKER_LOGIN --password-stdin"
+      - run:
+          name: "Push images"
+          command: "./push-multi-arch-latest.sh"
 
 workflows:
   build-workflow:
     jobs:
-      - build
+      - init
+      - arm64-build:
+          requires:
+            - init
+      - amd64-build:
+          requires:
+            - init
+      - aggregate-images:
+          requires:
+            - arm64-build
+            - amd64-build
