@@ -5,8 +5,9 @@ ARG GSTREAMER_REPOSITORY=https://gitlab.freedesktop.org/philn/gstreamer.git
 # 1.20-studio-rebase-220504 branch
 ARG GSTREAMER_CHECKOUT=3cbbd3addcf5dd1f88ab595a5562d16ee975c35d
 
-ARG GSTREAMER_CEF_REPOSITORY=https://github.com/centricular/gstcefsrc
-ARG GSTREAMER_CEF_CHECKOUT=cce144d984e70cc88f4624390419171fea6ca8ee
+ARG GSTREAMER_CEF_REPOSITORY=https://github.com/philn/gstcefsrc
+# cefsrc: Apply running time on audio buffers
+ARG GSTREAMER_CEF_CHECKOUT=68ad8424a1138f6dd05ac12d2f08081049f66bdd
 
 COPY docker/cef-config.sh /.cef-config.sh
 
