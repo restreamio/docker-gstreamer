@@ -8,6 +8,26 @@ git checkout "$GSTREAMER_CHECKOUT"
 wget -O - https://gitlab.freedesktop.org/gstreamer/gstreamer/-/merge_requests/2947.diff | git apply
 popd
 
+git clone --no-checkout "$GST_PLUGINS_RS_REPOSITORY"
+pushd gst-plugins-rs
+git checkout "$GST_PLUGINS_RS_CHECKOUT"
+popd
+
+wget https://wpewebkit.org/releases/libwpe-$LIBWPE_VERSION.tar.xz
+tar -xf libwpe-$LIBWPE_VERSION.tar.xz
+rm libwpe-$LIBWPE_VERSION.tar.xz
+mv libwpe-$LIBWPE_VERSION libwpe
+
+wget https://wpewebkit.org/releases/wpebackend-fdo-$WPEBACKEND_FDO_VERSION.tar.xz
+tar -xf wpebackend-fdo-$WPEBACKEND_FDO_VERSION.tar.xz
+rm wpebackend-fdo-$WPEBACKEND_FDO_VERSION.tar.xz
+mv wpebackend-fdo-$WPEBACKEND_FDO_VERSION wpebackend-fdo
+
+wget https://wpewebkit.org/releases/wpewebkit-$WPEWEBKIT_VERSION.tar.xz
+tar -xf wpewebkit-$WPEWEBKIT_VERSION.tar.xz
+rm wpewebkit-$WPEWEBKIT_VERSION.tar.xz
+mv wpewebkit-$WPEWEBKIT_VERSION wpewebkit
+
 git clone --no-checkout "$GSTREAMER_CEF_REPOSITORY"
 pushd gstcefsrc
 git checkout "$GSTREAMER_CEF_CHECKOUT"
