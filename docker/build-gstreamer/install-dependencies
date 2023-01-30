@@ -127,7 +127,9 @@ apt-get install -y --no-install-recommends \
   libavutil-dev \
   libva-dev \
   libudev-dev \
-  glibc-tools
+  glibc-tools \
+  libqrencode-dev \
+  libjson-glib-dev
 pip3 install meson ninja
 
 ARCH=$(dpkg --print-architecture)
