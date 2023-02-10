@@ -7,7 +7,7 @@ ARG GSTREAMER_CHECKOUT=3cbbd3addcf5dd1f88ab595a5562d16ee975c35d
 
 ARG GSTREAMER_CEF_REPOSITORY=https://github.com/SoftwareArchitector/gstcefsrc
 # fix/pts: audio/video pts improvements
-ARG GSTREAMER_CEF_CHECKOUT=454a36c9f8fe27b553ea12c50aaab6724335f3dd
+ARG GSTREAMER_CEF_CHECKOUT=b965cc7068665f9d2d3b941e1640fd15ada602dc
 
 COPY docker/cef-config.sh /.cef-config.sh
 
