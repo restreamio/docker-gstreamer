@@ -13,6 +13,7 @@ apt-get install -y --no-install-recommends \
   wget \
   python3 \
   python3-pip \
+  python3-dev \
   gcc \
   clang-$CLANG_VERSION \
   cmake \
@@ -130,7 +131,7 @@ apt-get install -y --no-install-recommends \
   glibc-tools \
   libqrencode-dev \
   libjson-glib-dev
-pip3 install meson ninja
+pip3 install meson ninja hotdoc
 
 ARCH=$(dpkg --print-architecture)
 if [[ $ARCH == "amd64" ]]; then
