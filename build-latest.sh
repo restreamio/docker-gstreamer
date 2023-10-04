@@ -32,13 +32,13 @@ docker_build dev-downloaded
 docker_build latest-dev-with-source
 
 # Build dev image with just binaries
-#docker_build latest-dev
+docker_build latest-dev
 
 # Build base production image with necessary dependencies
-#docker_build prod-base
+docker_build prod-base
 
 # Build production image optimized binaries and no debug symbols (-O3 LTO)
-#docker_build latest-prod
+docker_build latest-prod
 
 # Build production image optimized binaries and debug symbols
-#docker_build latest-prod-dbg
+docker_build latest-prod-dbg
