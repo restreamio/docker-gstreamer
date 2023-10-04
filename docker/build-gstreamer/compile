@@ -7,7 +7,7 @@ pushd gstreamer
 # TODO: Hack: `-D gupnp=disabled` is for libnice, because libgupnp-igd causes memory leaks
 # msdk=enabled is for gst-plugings-bad to include msdk elements
 # with_x11=no is for gstreamer-vaapi to exclude X11-related functionality (that would otherwise require extra dependencies)
-MESON_OPTIONS="-Dvaapi=enabled -Dgpl=enabled -Dgst-examples=disabled -Dexamples=disabled -Dtests=disabled -Ddoc=disabled -Dqt5=disabled -Dpython=disabled -Dges=disabled -Ddevtools=disabled -Dintrospection=disabled -Dlibnice:gupnp=disabled -Dgstreamer-vaapi:with_x11=no"
+MESON_OPTIONS="-Dvaapi=enabled -Dgpl=enabled -Dgst-examples=disabled -Dexamples=disabled -Dtests=disabled -Ddoc=disabled -Dqt5=disabled -Dpython=disabled -Dges=disabled -Ddevtools=disabled -Dintrospection=disabled -Dlibnice:gupnp=disabled -Dgstreamer-vaapi:x11=disabled -Dgstreamer-vaapi:encoders=enabled"
 
 ARCH=$(dpkg --print-architecture)
 if [[ $ARCH == "amd64" ]]; then
