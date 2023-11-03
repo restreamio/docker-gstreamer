@@ -1,0 +1,43 @@
+From 13766b7cbe74e4084f829c24811ca0335c308bb1 Mon Sep 17 00:00:00 2001
+From: Edward Hervey <edward@centricular.com>
+Date: Fri, 9 Oct 2020 15:54:59 +0200
+Subject: [PATCH] tsdemux: Discard early out of bound data
+
+If a stream has data which is drastically before initial PCR or other PTS, we
+might end up outputting initial buffers with no PTS/DTS. Downstream elements
+might assume this means the data starts from the segment start ... which can not
+be guaranteed.
+
+Instead of outputting data with invalid PTS/DTS, just drop it until we get valid
+timestamps.
+---
+ .../gst-plugins-bad/gst/mpegtsdemux/tsdemux.c       | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/subprojects/gst-plugins-bad/gst/mpegtsdemux/tsdemux.c b/subprojects/gst-plugins-bad/gst/mpegtsdemux/tsdemux.c
+index 6174850c571..94df9d12a93 100644
+--- a/subprojects/gst-plugins-bad/gst/mpegtsdemux/tsdemux.c
++++ b/subprojects/gst-plugins-bad/gst/mpegtsdemux/tsdemux.c
+@@ -3507,6 +3507,19 @@ gst_ts_demux_push_pending_data (GstTSDemux * demux, TSDemuxStream * stream,
+     goto beach;
+   }
+ 
++  /* If at this point we still haven't detected a valid PTS, this means we are
++   * earlier than the previously outputted PTS of other streams. We therefore
++   * discard the data instead of confusing elements downstream. */
++  if (stream->first_pts == GST_CLOCK_TIME_NONE
++      && stream->pts == GST_CLOCK_TIME_NONE) {
++    GST_WARNING_OBJECT (stream->pad, "Dropping early out of bound buffer");
++    if (buffer)
++      gst_buffer_unref (buffer);
++    if (buffer_list)
++      gst_buffer_list_unref (buffer_list);
++    goto beach;
++  }
++
+   GST_DEBUG_OBJECT (stream->pad, "stream->pts %" GST_TIME_FORMAT,
+       GST_TIME_ARGS (stream->pts));
+ 
+-- 
+GitLab
+

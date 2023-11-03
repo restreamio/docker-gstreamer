@@ -23,6 +23,9 @@ if [[ $DEBUG == 'true' ]]; then
 else
   meson build -D prefix=/usr $MESON_OPTIONS -D buildtype=release -D b_lto=true
 fi
+
+git apply /compile-patch/parse-input-pts.patch
+
 # This is needed for other plugins to be built properly
 ninja -C build install
 # This is where we'll grab build artifacts from
