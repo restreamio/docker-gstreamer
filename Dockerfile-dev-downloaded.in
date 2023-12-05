@@ -17,3 +17,4 @@ COPY docker/build-gstreamer/download /download
 RUN ["/download"]
 
 COPY docker/build-gstreamer/compile /compile
+COPY docker/build-gstreamer/patch /compile-patch

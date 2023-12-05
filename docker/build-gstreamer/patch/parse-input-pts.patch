@@ -1,0 +1,33 @@
+From e3ef323fda57a4b4e604820f8e183fea97892acd Mon Sep 17 00:00:00 2001
+From: Matthew Waters <matthew@centricular.com>
+Date: Tue, 29 Sep 2020 14:51:54 +1000
+Subject: [PATCH] WIP: baseparse: always update the input pts if available from
+ upstream
+
+We were not which could lead to output buffers having a pts of NONE even
+if all the input ts were entirely coherent.  This meant that certain
+muxers would reject the buffer without a pts and fail.
+---
+ subprojects/gstreamer/libs/gst/base/gstbaseparse.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/subprojects/gstreamer/libs/gst/base/gstbaseparse.c b/subprojects/gstreamer/libs/gst/base/gstbaseparse.c
+index 660439bacfa..04d400604ca 100644
+--- a/subprojects/gstreamer/libs/gst/base/gstbaseparse.c
++++ b/subprojects/gstreamer/libs/gst/base/gstbaseparse.c
+@@ -3263,9 +3263,10 @@ gst_base_parse_chain (GstPad * pad, GstObject * parent, GstBuffer * buffer)
+      * but interpolate in between */
+     pts = gst_adapter_prev_pts (parse->priv->adapter, NULL);
+     dts = gst_adapter_prev_dts (parse->priv->adapter, NULL);
+-    if (GST_CLOCK_TIME_IS_VALID (pts) && (parse->priv->prev_pts != pts)) {
++    if (GST_CLOCK_TIME_IS_VALID (pts)) {
++      if (parse->priv->prev_pts != pts)
++        updated_prev_pts = TRUE;
+       parse->priv->prev_pts = parse->priv->next_pts = pts;
+-      updated_prev_pts = TRUE;
+     }
+ 
+     if (GST_CLOCK_TIME_IS_VALID (dts) && (parse->priv->prev_dts != dts)) {
+-- 
+GitLab
+
