@@ -6,7 +6,8 @@ ARG GSTREAMER_REPOSITORY=https://gitlab.freedesktop.org/philn/gstreamer.git
 ARG GSTREAMER_CHECKOUT=3cbbd3addcf5dd1f88ab595a5562d16ee975c35d
 
 ARG GSTREAMER_CEF_REPOSITORY=https://github.com/centricular/gstcefsrc
-ARG GSTREAMER_CEF_CHECKOUT=cce144d984e70cc88f4624390419171fea6ca8ee
+# ARG GSTREAMER_CEF_CHECKOUT=cce144d984e70cc88f4624390419171fea6ca8ee
+ARG GSTREAMER_CEF_CHECKOUT=5643c02bda8a67f9397aa15d4905a52c00d6cc16
 
 COPY docker/cef-config.sh /.cef-config.sh
 
