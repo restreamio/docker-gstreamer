@@ -128,6 +128,8 @@ RUN \
 COPY docker/install-arch-specific-dependencies.sh /.install-deps.sh
 RUN /.install-deps.sh
 
+# Add nobody to the render group to allow access to /dev/dri/renderD128
+# It enables access to the Intel GPU through libva for hardware acceleration
 RUN \
     rm -f /.install-deps.sh && \
     apt-get clean && \
