@@ -131,4 +131,6 @@ RUN /.install-deps.sh
 RUN \
     rm -f /.install-deps.sh && \
     apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/* && \
+    groupadd -f -g 110 render && \
+    adduser nobody render
