@@ -1,14 +1,7 @@
 #!/bin/bash
 set -e
 
-#git clone --no-checkout "$GSTREAMER_REPOSITORY"
-#pushd gstreamer
-#git checkout "$GSTREAMER_CHECKOUT"
-## rtpvp8depay: Also wait for keyframes if configured so if incomplete frames are detected
-#wget -O - https://gitlab.freedesktop.org/gstreamer/gstreamer/-/merge_requests/2947.diff | git apply
-#popd
-
-git clone -b 1.22.7 https://gitlab.freedesktop.org/gstreamer/gstreamer.git
+git clone -b "$GSTREAMER_VERSION" https://gitlab.freedesktop.org/gstreamer/gstreamer.git
 
 git clone --no-checkout "$GSTREAMER_CEF_REPOSITORY"
 pushd gstcefsrc

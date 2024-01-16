@@ -2,7 +2,7 @@
 set -e
 
 if [[ -z "$1" ]]; then
-    echo -e "Usage example:\n  $0 1.20.1"
+    echo -e "Usage example:\n  $0 1.22.8"
     exit 1
 fi
 
@@ -19,8 +19,7 @@ docker pull ubuntu:22.04
 docker build -t restreamio/gstreamer:dev-dependencies -f Dockerfile-dev-dependencies .
 # Download source code
 docker build -t restreamio/gstreamer:dev-downloaded \
-    --build-arg GSTREAMER_REPOSITORY=https://gitlab.freedesktop.org/gstreamer/gstreamer.git \
-    --build-arg GSTREAMER_CHECKOUT=$1 \
+    --build-arg GSTREAMER_VERSION=$1 \
     -f Dockerfile-dev-downloaded .
 # Build dev image with source code included
 docker build --build-arg WEBKIT_USE_SCCACHE=$WEBKIT_USE_SCCACHE -t restreamio/gstreamer:$1-dev-with-source -f Dockerfile-dev-with-source .

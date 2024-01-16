@@ -2,7 +2,7 @@
 set -e
 
 if [[ (-z "$1") || (-z "$2") || (-z "$3") ]]; then
-    echo -e "Usage example:\n  $0 amd64 1.18.1 0"
+    echo -e "Usage example:\n  $0 amd64 1.22.8 0"
     exit 1
 fi
 
