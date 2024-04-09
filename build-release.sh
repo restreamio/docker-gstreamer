@@ -2,7 +2,7 @@
 set -e
 
 if [[ -z "$1" ]]; then
-    echo -e "Usage example:\n  $0 1.22.8"
+    echo -e "Usage example:\n  $0 1.22.11"
     exit 1
 fi
 
