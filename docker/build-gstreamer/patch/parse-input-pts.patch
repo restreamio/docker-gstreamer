@@ -15,7 +15,7 @@ diff --git a/subprojects/gstreamer/libs/gst/base/gstbaseparse.c b/subprojects/gs
 index 660439bacfa..04d400604ca 100644
 --- a/subprojects/gstreamer/libs/gst/base/gstbaseparse.c
 +++ b/subprojects/gstreamer/libs/gst/base/gstbaseparse.c
-@@ -3263,9 +3263,10 @@ gst_base_parse_chain (GstPad * pad, GstObject * parent, GstBuffer * buffer)
+@@ -3281,9 +3281,10 @@ gst_base_parse_chain (GstPad * pad, GstObject * parent, GstBuffer * buffer)
       * but interpolate in between */
      pts = gst_adapter_prev_pts (parse->priv->adapter, NULL);
      dts = gst_adapter_prev_dts (parse->priv->adapter, NULL);

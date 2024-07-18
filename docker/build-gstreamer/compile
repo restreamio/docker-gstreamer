@@ -25,6 +25,7 @@ else
 fi
 
 git apply /compile-patch/parse-input-pts.patch
+git apply /compile-patch/0001-compositor-add-rounded-corners-property-for-sink-pad.patch
 
 # This is needed for other plugins to be built properly
 ninja -C build install

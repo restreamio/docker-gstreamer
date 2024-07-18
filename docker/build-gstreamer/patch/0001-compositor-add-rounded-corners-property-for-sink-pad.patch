@@ -1,0 +1,364 @@
+From dd260de0def61760196b76cf33a7bda62280db40 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Lo=C3=AFc=20Le=20Page?= <llepage@igalia.com>
+Date: Thu, 18 Jul 2024 18:34:55 +0200
+Subject: [PATCH] compositor: add rounded corners property for sink pads
+
+---
+ .../gst/compositor/compositor.c               | 239 +++++++++++++++++-
+ .../gst/compositor/compositor.h               |   7 +
+ 2 files changed, 240 insertions(+), 6 deletions(-)
+
+diff --git a/subprojects/gst-plugins-base/gst/compositor/compositor.c b/subprojects/gst-plugins-base/gst/compositor/compositor.c
+index 54a2e9dc58..cc40e50add 100644
+--- a/subprojects/gst-plugins-base/gst/compositor/compositor.c
++++ b/subprojects/gst-plugins-base/gst/compositor/compositor.c
+@@ -41,6 +41,20 @@
+  * * "alpha": The transparency of the picture; between 0.0 and 1.0. The blending
+  *   is a simple copy when fully-transparent (0.0) and fully-opaque (1.0). (#gdouble)
+  * * "zorder": The z-order position of the picture in the composition (#guint)
++ * * "border-radius": The radius in pixels of the picture rounded corners (array
++ *   of 0 to 4 #guint). It has the same effect as the CSS "border-radius" property
++ *   and uses the same syntax:
++ *   - if no value is set, no corner is rounded
++ *   - if 1 value is set, all corners are rounded with the provided radius
++ *   - if 2 values are set, the first one is for the top-left and bottom-right
++ *     corners, and the second one for the top-right and bottom-left corners
++ *   - if 3 values are set, the first one is for the top-left corner, the
++ *     second one for the top-right and bottom-left corners, and the third one
++ *     for the bottom-right corner
++ *   - if 4 values are set, the first one is for the top-left corner, the second
++ *     one for the top-right corner, the third one for the bottom-right corner,
++ *     and the fourth one for the bottom-left corner
++ *   - all extra values in the array are just ignored
+  *
+  * ## Sample pipelines
+  * |[
+@@ -83,13 +97,24 @@
+  *   "video/x-raw,format=AYUV,width=800,height=600,framerate=(fraction)10/1" ! \
+  *   timeoverlay ! queue2 ! comp.
+  * ]| A pipeline to demonstrate synchronized compositing (the second stream starts after 3 seconds)
+- *
++ * |[
++ * gst-launch-1.0 compositor name=comp \
++ *   sink_0::xpos=150 sink_0::ypos=150 sink_0::border-radius="<0,50,200>" \
++ *   sink_1::xpos=1300 sink_1::ypos=400 sink_1::border-radius="<400>" ! \
++ *   video/x-raw,width=1920,height=1080,framerate=30/1 ! \
++ *   videoconvert ! autovideosink \
++ *   videotestsrc ! video/x-raw,width=1280,height=720,format=RGBA ! \
++ *   timeoverlay ! queue ! comp. \
++ *   videotestsrc ! video/x-raw,width=400,height=400,format=RGBA ! \
++ *   queue ! comp.
++ * ]| A pipeline to demonstrate rounded corners
+  */
+ 
+ #ifdef HAVE_CONFIG_H
+ #include "config.h"
+ #endif
+ 
++#include <math.h>
+ #include <string.h>
+ 
+ #include "compositor.h"
+@@ -194,6 +219,7 @@ gst_compositor_sizing_policy_get_type (void)
+ #define DEFAULT_PAD_ALPHA  1.0
+ #define DEFAULT_PAD_OPERATOR COMPOSITOR_OPERATOR_OVER
+ #define DEFAULT_PAD_SIZING_POLICY COMPOSITOR_SIZING_POLICY_NONE
++#define DEFAULT_PAD_BORDER_RADIUS 0
+ 
+ enum
+ {
+@@ -205,6 +231,7 @@ enum
+   PROP_PAD_ALPHA,
+   PROP_PAD_OPERATOR,
+   PROP_PAD_SIZING_POLICY,
++  PROP_PAD_BORDER_RADIUS,
+ };
+ 
+ G_DEFINE_TYPE (GstCompositorPad, gst_compositor_pad,
+@@ -238,6 +265,26 @@ gst_compositor_pad_get_property (GObject * object, guint prop_id,
+     case PROP_PAD_SIZING_POLICY:
+       g_value_set_enum (value, pad->sizing_policy);
+       break;
++    case PROP_PAD_BORDER_RADIUS:
++    {
++      GValue radius = G_VALUE_INIT;
++      g_value_init (&radius, G_TYPE_UINT);
++
++      g_value_set_uint (&radius, pad->border_radius.top_left);
++      gst_value_array_append_value (value, &radius);
++
++      g_value_set_uint (&radius, pad->border_radius.top_right);
++      gst_value_array_append_value (value, &radius);
++
++      g_value_set_uint (&radius, pad->border_radius.bottom_right);
++      gst_value_array_append_value (value, &radius);
++
++      g_value_set_uint (&radius, pad->border_radius.bottom_left);
++      gst_value_array_append_value (value, &radius);
++
++      g_value_unset (&radius);
++    }
++      break;
+     default:
+       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+       break;
+@@ -273,13 +320,65 @@ gst_compositor_pad_set_property (GObject * object, guint prop_id,
+     case PROP_PAD_OPERATOR:
+       pad->op = g_value_get_enum (value);
+       gst_video_aggregator_pad_set_needs_alpha (GST_VIDEO_AGGREGATOR_PAD (pad),
+-          pad->op == COMPOSITOR_OPERATOR_ADD);
++          pad->op == COMPOSITOR_OPERATOR_ADD
++          || pad->border_radius.has_rounded_corners);
+       break;
+     case PROP_PAD_SIZING_POLICY:
+       pad->sizing_policy = g_value_get_enum (value);
+       gst_video_aggregator_convert_pad_update_conversion_info
+           (GST_VIDEO_AGGREGATOR_CONVERT_PAD (pad));
+       break;
++    case PROP_PAD_BORDER_RADIUS:
++      switch (gst_value_array_get_size (value)) {
++        case 0:
++          pad->border_radius.top_left = 0;
++          pad->border_radius.top_right = 0;
++          pad->border_radius.bottom_right = 0;
++          pad->border_radius.bottom_left = 0;
++          break;
++        case 1:
++          pad->border_radius.top_left =
++              g_value_get_uint (gst_value_array_get_value (value, 0));
++          pad->border_radius.top_right = pad->border_radius.top_left;
++          pad->border_radius.bottom_right = pad->border_radius.top_left;
++          pad->border_radius.bottom_left = pad->border_radius.top_left;
++          break;
++        case 2:
++          pad->border_radius.top_left =
++              g_value_get_uint (gst_value_array_get_value (value, 0));
++          pad->border_radius.top_right =
++              g_value_get_uint (gst_value_array_get_value (value, 1));
++          pad->border_radius.bottom_right = pad->border_radius.top_left;
++          pad->border_radius.bottom_left = pad->border_radius.top_right;
++          break;
++        case 3:
++          pad->border_radius.top_left =
++              g_value_get_uint (gst_value_array_get_value (value, 0));
++          pad->border_radius.top_right =
++              g_value_get_uint (gst_value_array_get_value (value, 1));
++          pad->border_radius.bottom_right =
++              g_value_get_uint (gst_value_array_get_value (value, 2));
++          pad->border_radius.bottom_left = pad->border_radius.top_right;
++          break;
++        default:
++          pad->border_radius.top_left =
++              g_value_get_uint (gst_value_array_get_value (value, 0));
++          pad->border_radius.top_right =
++              g_value_get_uint (gst_value_array_get_value (value, 1));
++          pad->border_radius.bottom_right =
++              g_value_get_uint (gst_value_array_get_value (value, 2));
++          pad->border_radius.bottom_left =
++              g_value_get_uint (gst_value_array_get_value (value, 3));
++          break;
++      }
++      pad->border_radius.has_rounded_corners = (pad->border_radius.top_left > 0
++          || pad->border_radius.top_right > 0
++          || pad->border_radius.bottom_right > 0
++          || pad->border_radius.bottom_left > 0);
++      gst_video_aggregator_pad_set_needs_alpha (GST_VIDEO_AGGREGATOR_PAD (pad),
++          pad->op == COMPOSITOR_OPERATOR_ADD
++          || pad->border_radius.has_rounded_corners);
++      break;
+     default:
+       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+       break;
+@@ -475,11 +574,12 @@ _pad_obscures_rectangle (GstVideoAggregator * vagg, GstVideoAggregatorPad * pad,
+   if (!gst_video_aggregator_pad_has_current_buffer (pad))
+     return FALSE;
+ 
+-  /* Can't obscure if we introduce alpha or if the format has an alpha
+-   * component as we'd have to inspect every pixel to know if the frame is
+-   * opaque, so assume it doesn't obscure
++  /* Can't obscure if we introduce alpha, rounded corners, or if the format has
++   * an alpha component as we'd have to inspect every pixel to know if the frame
++   * is opaque, so assume it doesn't obscure
+    */
+-  if (cpad->alpha != 1.0 || GST_VIDEO_INFO_HAS_ALPHA (&pad->info))
++  if (cpad->alpha != 1.0 || cpad->border_radius.has_rounded_corners
++      || GST_VIDEO_INFO_HAS_ALPHA (&pad->info))
+     return FALSE;
+ 
+   /* If a converter-config is set and it is either configured to not fill any
+@@ -716,6 +816,34 @@ gst_compositor_pad_class_init (GstCompositorPadClass * klass)
+           GST_TYPE_COMPOSITOR_SIZING_POLICY, DEFAULT_PAD_SIZING_POLICY,
+           G_PARAM_READWRITE | GST_PARAM_CONTROLLABLE | G_PARAM_STATIC_STRINGS));
+ 
++  /**
++   * GstCompositorPad:border-radius:
++   *
++   * Specifies the border radius in pixels for each of the picture corners. It
++   * has the same effect and syntax as the CSS "border-radius" property:
++   * - if no value is set, no corner is rounded
++   * - if 1 value is set, all corners are rounded with the provided radius
++   * - if 2 values are set, the first one is for the top-left and bottom-right
++   *   corners, and the second one for the top-right and bottom-left corners
++   * - if 3 values are set, the first one is for the top-left corner, the
++   *   second one for the top-right and bottom-left corners, and the third one
++   *   for the bottom-right corner
++   * - if 4 values are set, the first one is for the top-left corner, the second
++   *   one for the top-right corner, the third one for the bottom-right corner,
++   *   and the fourth one for the bottom-left corner
++   * - all extra values in the array are just ignored
++   *
++   * Since: 1.26
++   */
++  g_object_class_install_property (gobject_class, PROP_PAD_BORDER_RADIUS,
++      gst_param_spec_array ("border-radius", "Border Radius",
++          "Border radius in pixels for each of the picture corners (same syntax as the CSS property)",
++          g_param_spec_uint ("radius", "radius", "radius", 0, G_MAXUINT,
++              DEFAULT_PAD_BORDER_RADIUS,
++              G_PARAM_READWRITE | GST_PARAM_CONTROLLABLE |
++              G_PARAM_STATIC_STRINGS),
++          G_PARAM_READWRITE | GST_PARAM_CONTROLLABLE | G_PARAM_STATIC_STRINGS));
++
+   vaggpadclass->prepare_frame_start =
+       GST_DEBUG_FUNCPTR (gst_compositor_pad_prepare_frame_start);
+ 
+@@ -735,6 +863,16 @@ gst_compositor_pad_init (GstCompositorPad * compo_pad)
+   compo_pad->width = DEFAULT_PAD_WIDTH;
+   compo_pad->height = DEFAULT_PAD_HEIGHT;
+   compo_pad->sizing_policy = DEFAULT_PAD_SIZING_POLICY;
++
++  compo_pad->border_radius.top_left = DEFAULT_PAD_BORDER_RADIUS;
++  compo_pad->border_radius.top_right = DEFAULT_PAD_BORDER_RADIUS;
++  compo_pad->border_radius.bottom_right = DEFAULT_PAD_BORDER_RADIUS;
++  compo_pad->border_radius.bottom_left = DEFAULT_PAD_BORDER_RADIUS;
++  compo_pad->border_radius.has_rounded_corners =
++      (compo_pad->border_radius.top_left > 0
++      || compo_pad->border_radius.top_right > 0
++      || compo_pad->border_radius.bottom_right > 0
++      || compo_pad->border_radius.bottom_left > 0);
+ }
+ 
+ 
+@@ -1633,6 +1771,86 @@ blend_pads (struct CompositeTask *comp)
+   }
+ }
+ 
++static void
++cut_off_rounded_corners (GstCompositorPad * pad, GstVideoFrame * frame)
++{
++  // All color formats with an alpha component, currently composed at this
++  // stage, have common characteristics:
++  // - the alpha component depth is always 8 or 16 bits
++  // - in planar mode, the alpha plane has the same width and height as the Y
++  //   plane (no subsampling)
++  guint alpha_comp_depth = GST_VIDEO_FRAME_COMP_DEPTH (frame, 3);
++  if ((alpha_comp_depth != 8 && alpha_comp_depth != 16)
++      || frame->info.finfo->w_sub[3] != 0 || frame->info.finfo->h_sub[3] != 0) {
++    GST_FIXME_OBJECT (pad, "Unexpected source frame video format %s",
++        gst_video_format_to_string (frame->info.finfo->format));
++    return;
++  }
++
++  guint max_border_radius = MIN (MAX (0, (frame->info.width - 1) >> 1), MAX (0,
++          (frame->info.height - 1) >> 1));
++
++  guint border_radius[4] = {
++    MIN (max_border_radius, pad->border_radius.top_left),
++    MIN (max_border_radius, pad->border_radius.top_right),
++    MIN (max_border_radius, pad->border_radius.bottom_left),
++    MIN (max_border_radius, pad->border_radius.bottom_right)
++  };
++
++  guint8 *alpha_data = GST_VIDEO_FRAME_COMP_DATA (frame, 3);
++  guint alpha_comp_stride = GST_VIDEO_FRAME_COMP_PSTRIDE (frame, 3);
++  guint line_stride = GST_VIDEO_FRAME_COMP_STRIDE (frame, 3);
++
++  for (gint i = 0; i < 4; ++i) {
++    guint radius = border_radius[i];
++    if (radius > 0) {
++      guint radius2 = radius * radius;
++
++      for (guint y = 0; y <= radius; ++y) {
++        guint dy = radius - y;
++        guint dy2 = dy * dy;
++
++        guint8 *line = alpha_data;
++        if (i < 2) {
++          // Top
++          line += y * line_stride;
++        } else {
++          // Bottom
++          line += (frame->info.height - 1 - y) * line_stride;
++        }
++
++        for (guint x = 0; x <= radius; ++x) {
++          guint dx = radius - x;
++          float dist = dx * dx + dy2;
++
++          if (dist >= radius2) {
++            // The falloff function has a width of 2 pixels, so we add 1 pixel
++            // to the distance to correctly center the arc rasterisation.
++            dist = sqrt (dist) - radius + 1;
++            float coeff = CLAMP (1.f - dist * dist * dist / 8.f, 0.f, 1.f);
++
++            guint8 *component;
++            if (i % 2) {
++              // Right
++              component =
++                  line + alpha_comp_stride * (frame->info.width - 1 - x);
++            } else {
++              // Left
++              component = line + alpha_comp_stride * x;
++            }
++
++            if (alpha_comp_depth == 16) {
++              *(guint16 *) component *= coeff;
++            } else {
++              *component *= coeff;
++            }
++          }
++        }
++      }
++    }
++  }
++}
++
+ static GstFlowReturn
+ gst_compositor_aggregate_frames (GstVideoAggregator * vagg, GstBuffer * outbuf)
+ {
+@@ -1718,6 +1936,15 @@ gst_compositor_aggregate_frames (GstVideoAggregator * vagg, GstBuffer * outbuf)
+           frames_can_copy (prepared_frame, outframe)) {
+         gst_video_frame_copy (outframe, prepared_frame);
+       } else {
++        if (compo_pad->border_radius.has_rounded_corners
++            && GST_VIDEO_INFO_HAS_ALPHA (&prepared_frame->info)) {
++          if (blend_mode == COMPOSITOR_BLEND_MODE_SOURCE) {
++            blend_mode = COMPOSITOR_BLEND_MODE_OVER;
++          }
++
++          cut_off_rounded_corners (compo_pad, prepared_frame);
++        }
++
+         pads_info[n_pads].pad = compo_pad;
+         pads_info[n_pads].prepared_frame = prepared_frame;
+         pads_info[n_pads].blend_mode = blend_mode;
+diff --git a/subprojects/gst-plugins-base/gst/compositor/compositor.h b/subprojects/gst-plugins-base/gst/compositor/compositor.h
+index c3d2998422..1b48c1b035 100644
+--- a/subprojects/gst-plugins-base/gst/compositor/compositor.h
++++ b/subprojects/gst-plugins-base/gst/compositor/compositor.h
+@@ -170,6 +170,13 @@ struct _GstCompositorPad
+   gint width, height;
+   gdouble alpha;
+   GstCompositorSizingPolicy sizing_policy;
++  struct {
++    guint top_left;
++    guint top_right;
++    guint bottom_right;
++    guint bottom_left;
++    gboolean has_rounded_corners;
++  } border_radius;
+ 
+   GstCompositorOperator op;
+ 
+-- 
+2.34.1
+
