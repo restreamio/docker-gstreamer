@@ -1,6 +1,6 @@
 FROM restreamio/gstreamer:$TARGET_ARCH-dev-dependencies
 
-ARG GSTREAMER_VERSION=1.22.11
+ARG GSTREAMER_VERSION=1.22.12
 
 ARG GSTREAMER_CEF_REPOSITORY=https://github.com/centricular/gstcefsrc
 ARG GSTREAMER_CEF_CHECKOUT=cce144d984e70cc88f4624390419171fea6ca8ee
