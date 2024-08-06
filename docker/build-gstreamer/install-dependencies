@@ -21,6 +21,7 @@ apt-get install -y --no-install-recommends \
   libatk-bridge2.0-dev \
   libatspi2.0-dev \
   libcups2-dev \
+  libc++1 \
   libxcomposite-dev \
   libxdamage-dev \
   libunwind-dev \
