@@ -1,0 +1,42 @@
+From 0c69254faaa380f14588e50651a82a9e67d5731b Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Lo=C3=AFc=20Le=20Page?= <llepage@igalia.com>
+Date: Mon, 14 Oct 2024 18:47:48 +0200
+Subject: [PATCH] cefsrc: unmultiply alpha
+
+---
+ gstcefsrc.cc | 19 +++++++++++++++++++
+ 1 file changed, 19 insertions(+)
+
+diff --git a/gstcefsrc.cc b/gstcefsrc.cc
+index b06897e..2c4b1da 100644
+--- a/gstcefsrc.cc
++++ b/gstcefsrc.cc
+@@ -116,6 +116,25 @@ class RenderHandler : public CefRenderHandler
+       new_buffer = gst_buffer_new_allocate (NULL, element->vinfo.width * element->vinfo.height * 4, NULL);
+       gst_buffer_fill (new_buffer, 0, buffer, w * h * 4);
+ 
++      // CEF output is alpha pre-multipled,
++      // we need to unmultiply it to be compatible with the compositor
++      GstMapInfo info = {};
++      if (gst_buffer_map (new_buffer, &info, GST_MAP_READWRITE)) {
++        guint8 *data = info.data;
++        for (gint i = 0; i < element->vinfo.width * element->vinfo.height; ++i)
++        {
++          float alpha = data[3];
++          if (alpha != 0 && alpha != 255) {
++            alpha = 255.f / alpha;
++            data[0] *= alpha;
++            data[1] *= alpha;
++            data[2] *= alpha;
++          }
++          data += 4;
++        }
++        gst_buffer_unmap (new_buffer, &info);
++      }
++
+       GST_OBJECT_LOCK (element);
+       gst_buffer_replace (&(element->current_buffer), new_buffer);
+       gst_buffer_unref (new_buffer);
+-- 
+2.43.0
+
