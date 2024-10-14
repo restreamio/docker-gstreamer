@@ -1,7 +1,7 @@
 From e3ef323fda57a4b4e604820f8e183fea97892acd Mon Sep 17 00:00:00 2001
 From: Matthew Waters <matthew@centricular.com>
 Date: Tue, 29 Sep 2020 14:51:54 +1000
-Subject: [PATCH] WIP: baseparse: always update the input pts if available from
+Subject: [PATCH] baseparse: always update the input pts if available from
  upstream
 
 We were not which could lead to output buffers having a pts of NONE even

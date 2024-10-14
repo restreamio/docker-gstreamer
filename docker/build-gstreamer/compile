@@ -24,7 +24,7 @@ else
   meson build -D prefix=/usr $MESON_OPTIONS -D buildtype=release -D b_lto=true
 fi
 
-git apply /compile-patch/parse-input-pts.patch
+git apply /compile-patch/0001-baseparse-always-update-the-input-pts-if-available-from.patch
 git apply /compile-patch/0001-compositor-add-rounded-corners-property-for-sink-pad.patch
 
 # This is needed for other plugins to be built properly
@@ -42,6 +42,9 @@ GST_CEF_CMAKE_OPTS="-DCMAKE_INSTALL_PREFIX=/usr/cef -GNinja -DCEF_BUILDS_HOMEPAG
 GST_CEF_BUILD_TYPE=Release
 
 cmake -DCMAKE_BUILD_TYPE=$GST_CEF_BUILD_TYPE $GST_CEF_CMAKE_OPTS -B build -S .
+
+git apply /compile-patch/0001-cefsrc-unmultiply-alpha.patch
+
 DESTDIR=/compiled-binaries ninja -C build install
 rm -fr build third_party
 popd
