@@ -26,6 +26,7 @@ fi
 
 git apply /compile-patch/0001-baseparse-always-update-the-input-pts-if-available-from.patch
 git apply /compile-patch/0001-compositor-add-rounded-corners-property-for-sink-pad.patch
+git apply /compile-patch/0001-pad-Check-data-NULL-ness-when-probes-are-stopped-fixed-in-1.24.8.patch
 
 # This is needed for other plugins to be built properly
 ninja -C build install
