@@ -1,0 +1,35 @@
+From 5a70b3c8d4f4c1213064d372ee48069bf957c80a Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Lo=C3=AFc=20Le=20Page?= <llepage@igalia.com>
+Date: Mon, 2 Dec 2024 12:25:42 +0100
+Subject: [PATCH] Reduce logs verbosity in webrtcbin when a FEC decoder cannot
+ be found
+
+---
+ subprojects/gst-plugins-bad/ext/webrtc/gstwebrtcbin.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/subprojects/gst-plugins-bad/ext/webrtc/gstwebrtcbin.c b/subprojects/gst-plugins-bad/ext/webrtc/gstwebrtcbin.c
+index 0e315ac466..3acae76b6f 100644
+--- a/subprojects/gst-plugins-bad/ext/webrtc/gstwebrtcbin.c
++++ b/subprojects/gst-plugins-bad/ext/webrtc/gstwebrtcbin.c
+@@ -5013,7 +5013,7 @@ try_match_transceiver_with_fec_decoder (GstWebRTCBin * webrtc,
+       if (original_pt == item->pt && item->media_idx != -1
+           && item->media_idx == trans->parent.mline) {
+         if (trans->ulpfecdec) {
+-          GST_FIXME_OBJECT (trans, "cannot");
++          // GST_FIXME_OBJECT (trans, "cannot");
+           gst_clear_object (&trans->ulpfecdec);
+         }
+         trans->ulpfecdec = gst_object_ref (fecdec);
+@@ -5023,7 +5023,7 @@ try_match_transceiver_with_fec_decoder (GstWebRTCBin * webrtc,
+     }
+ 
+     if (!found_transceiver) {
+-      GST_WARNING_OBJECT (trans, "failed to match fec decoder with "
++      GST_INFO_OBJECT (trans, "failed to match fec decoder with "
+           "transceiver");
+     }
+   }
+-- 
+2.43.0
+
