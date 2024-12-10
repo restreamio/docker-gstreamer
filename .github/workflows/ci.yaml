@@ -2,7 +2,12 @@ name: Docker Build Workflow
 
 on:
   push:
+    branches:
+    - master
+
   pull_request:
+    branches:
+    - master
 
 concurrency:
   group: ${{ github.event.repository.name }}-ci-${{ github.event.pull_request.number }}
@@ -41,6 +46,7 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: workspace
+        path: workspace
 
     - name: Verify workspace directory
       run: ls workspace
@@ -71,6 +77,7 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: workspace
+        path: workspace
 
     - name: Load environment variables
       run: source workspace/env-vars
@@ -100,6 +107,7 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: workspace
+        path: workspace
 
     - name: Load environment variables
       run: source workspace/env-vars
