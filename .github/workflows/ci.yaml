@@ -42,6 +42,9 @@ jobs:
       with:
         name: workspace
 
+    - name: Verify workspace directory
+      run: ls workspace
+
     - name: Load environment variables
       run: source workspace/env-vars
 
