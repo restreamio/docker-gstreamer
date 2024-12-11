@@ -7,8 +7,8 @@ TAG_BASENAME="restreamio/gstreamer:$DATE"
 
 echo "basename tag: $TAG_BASENAME"
 
-AMD64_TAG_BASENAME=$(cat ./workspace/docker-tag-basename-x86_64.txt)
-ARM64_TAG_BASENAME=$(cat ./workspace/docker-tag-basename-aarch64.txt)
+AMD64_TAG_BASENAME=$(cat ./docker-tag-basename-x86_64.txt)
+ARM64_TAG_BASENAME=$(cat ./docker-tag-basename-aarch64.txt)
 
 echo "amd64 basename tag: $AMD64_TAG_BASENAME"
 echo "arm64 basename tag: $ARM64_TAG_BASENAME"

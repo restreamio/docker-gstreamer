@@ -6,8 +6,7 @@ echo $DATE
 ARCH=$(uname -m)
 TAG_BASENAME="restreamio/gstreamer:$ARCH"
 
-mkdir -p workspace
-echo "$TAG_BASENAME-$DATE" > workspace/docker-tag-basename-$ARCH.txt
+echo "$TAG_BASENAME-$DATE" > docker-tag-basename-$ARCH.txt
 
 docker push $TAG_BASENAME-latest-dev-with-source
 docker tag $TAG_BASENAME-latest-dev-with-source $TAG_BASENAME-$DATE-dev-with-source

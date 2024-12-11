@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  WORKING_DIR: /tmp/docker-gst-ci
+  DOCKER_TAG_FILE_PREFIX: docker-tag-basename
 
 jobs:
   init:
@@ -23,17 +23,14 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Set up workspace
-      run: mkdir -p ${{ env.WORKING_DIR }}/workspace
+    - name: Set environment variables
+      run: echo "DATE=$(date -u +"%Y-%m-%dT%H-%M-%SZ")" > vars.env
 
-    - name: Save current date as environment variable
-      run: echo "DATE=$(date -u +"%Y-%m-%dT%H-%M-%SZ")" > ${{ env.WORKING_DIR }}/workspace/env-vars
-
-    - name: Upload date workspace artifact
+    - name: Upload env vars artifact
       uses: actions/upload-artifact@v4
       with:
-        name: date
-        path: ${{ env.WORKING_DIR }}/workspace
+        name: env-vars
+        path: ./vars.env
 
   amd64-build:
     needs: init
@@ -42,14 +39,14 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Download date workspace artifact
+    - name: Download env vars artifact
       uses: actions/download-artifact@v4
       with:
-        name: date
-        path: workspace
+        name: env-vars
+        path: ./
 
-    - name: Load environment variables
-      run: source workspace/env-vars
+    - name: Initialize environment variables
+      run: source ./vars.env
 
     - name: Login to DockerHub
       uses: docker/login-action@v3
@@ -63,11 +60,16 @@ jobs:
     - name: Push AMD64 image
       run: ./push-latest.sh
 
+    - name: Find and upload AMD64 docker tag
+      run: |
+        TAG_FILE=$(ls ./${DOCKER_TAG_FILE_PREFIX}-*.txt | head -n 1)
+        echo "TAG_FILE=$TAG_FILE" >> $GITHUB_ENV
+
     - name: Upload AMD64 docker tag
       uses: actions/upload-artifact@v4
       with:
         name: amd64-image-tag
-        path: workspace
+        path: ${{ env.TAG_FILE }}
 
   arm64-build:
     needs: init
@@ -76,14 +78,14 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Download workspace artifact
+    - name: Download env vars artifact
       uses: actions/download-artifact@v4
       with:
-        name: date
-        path: workspace
+        name: env-vars
+        path: ./
 
-    - name: Load environment variables
-      run: source workspace/env-vars
+    - name: Initialize environment variables
+      run: source ./vars.env
 
     - name: Login to DockerHub
       uses: docker/login-action@v3
@@ -97,11 +99,16 @@ jobs:
     - name: Push ARM64 image
       run: ./push-latest.sh
 
+    - name: Find and upload AMD64 docker tag
+      run: |
+        TAG_FILE=$(ls ./${DOCKER_TAG_FILE_PREFIX}-*.txt | head -n 1)
+        echo "TAG_FILE=$TAG_FILE" >> $GITHUB_ENV
+
     - name: Upload ARM64 docker tag
       uses: actions/upload-artifact@v4
       with:
         name: arm64-image-tag
-        path: workspace
+        path: ${{ env.TAG_FILE }}
 
   aggregate-images:
     needs:
@@ -112,25 +119,31 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Download AMD64 tag workspace artifact
+    - name: Download env vars artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: env-vars
+        path: ./
+
+    - name: Download AMD64 docker tag artifact
       uses: actions/download-artifact@v4
       with:
         name: amd64-image-tag
-        path: workspace
+        path: ./
 
-    - name: Download ARM64 tag workspace artifact
+    - name: Download ARM64 docker tag artifact
       uses: actions/download-artifact@v4
       with:
         name: arm64-image-tag
-        path: workspace
+        path: ./
 
-    - name: Load environment variables
-      run: source workspace/env-vars
+    - name: Initialize environment variables
+      run: source ./vars.env
 
     - name: Verify AMD64 and ARM64 tags
       run: |
-        cat workspace/docker-tag-basename-x86_64.txt
-        cat workspace/docker-tag-basename-aarch64.txt
+        cat ./docker-tag-basename-x86_64.txt
+        cat ./docker-tag-basename-aarch64.txt
 
     - name: Login to DockerHub
       uses: docker/login-action@v3
