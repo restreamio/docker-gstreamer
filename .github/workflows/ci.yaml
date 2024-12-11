@@ -52,9 +52,15 @@ jobs:
       run: source workspace/env-vars
 
     - name: Login to DockerHub
-      run: echo "${{ secrets.DOCKER_PWD }}" | docker login -u "${{ secrets.DOCKER_LOGIN }}" --password-stdin
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_LOGIN }}
+        password: ${{ secrets.DOCKER_PWD }}
 
-    - name: Build and push AMD64 images
+    - name: Build AMD64 image
+      run: ./build-latest.sh
+
+    - name: Push AMD64 image
       run: ./push-latest.sh
 
     - name: Upload AMD64 docker tag
@@ -80,9 +86,15 @@ jobs:
       run: source workspace/env-vars
 
     - name: Login to DockerHub
-      run: echo "${{ secrets.DOCKER_PWD }}" | docker login -u "${{ secrets.DOCKER_LOGIN }}" --password-stdin
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_LOGIN }}
+        password: ${{ secrets.DOCKER_PWD }}
 
-    - name: Build and push ARM64 images
+    - name: Build ARM64 image
+      run: ./build-latest.sh
+
+    - name: Push ARM64 image
       run: ./push-latest.sh
 
     - name: Upload ARM64 docker tag
@@ -115,7 +127,10 @@ jobs:
         cat workspace/docker-tag-basename-aarch64.txt
 
     - name: Login to DockerHub
-      run: echo "${{ secrets.DOCKER_PWD }}" | docker login -u "${{ secrets.DOCKER_LOGIN }}" --password-stdin
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_LOGIN }}
+        password: ${{ secrets.DOCKER_PWD }}
 
     - name: Push multi-architecture Docker images
       run: ./push-multi-arch-latest.sh
