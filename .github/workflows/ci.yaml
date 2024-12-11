@@ -29,10 +29,10 @@ jobs:
     - name: Save current date as environment variable
       run: echo "DATE=$(date -u +"%Y-%m-%dT%H-%M-%SZ")" > ${{ env.WORKING_DIR }}/workspace/env-vars
 
-    - name: Upload workspace artifact
+    - name: Upload date workspace artifact
       uses: actions/upload-artifact@v4
       with:
-        name: workspace
+        name: date
         path: ${{ env.WORKING_DIR }}/workspace
 
   amd64-build:
@@ -42,10 +42,10 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Download workspace artifact
+    - name: Download date workspace artifact
       uses: actions/download-artifact@v4
       with:
-        name: workspace
+        name: date
         path: workspace
 
     - name: Load environment variables
@@ -66,7 +66,7 @@ jobs:
     - name: Upload AMD64 docker tag
       uses: actions/upload-artifact@v4
       with:
-        name: workspace
+        name: amd64-image-tag
         path: workspace
 
   arm64-build:
@@ -79,7 +79,7 @@ jobs:
     - name: Download workspace artifact
       uses: actions/download-artifact@v4
       with:
-        name: workspace
+        name: date
         path: workspace
 
     - name: Load environment variables
@@ -100,7 +100,7 @@ jobs:
     - name: Upload ARM64 docker tag
       uses: actions/upload-artifact@v4
       with:
-        name: workspace
+        name: arm64-image-tag
         path: workspace
 
   aggregate-images:
@@ -112,10 +112,16 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Download workspace artifact
+    - name: Download AMD64 tag workspace artifact
       uses: actions/download-artifact@v4
       with:
-        name: workspace
+        name: amd64-image-tag
+        path: workspace
+
+    - name: Download ARM64 tag workspace artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: arm64-image-tag
         path: workspace
 
     - name: Load environment variables
