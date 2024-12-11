@@ -46,7 +46,8 @@ jobs:
         path: ./
 
     - name: Initialize environment variables
-      run: source ./vars.env
+      run: |
+        cat ./vars.env >> $GITHUB_ENV
 
     - name: Login to DockerHub
       uses: docker/login-action@v3
@@ -85,7 +86,8 @@ jobs:
         path: ./
 
     - name: Initialize environment variables
-      run: source ./vars.env
+      run: |
+        cat ./vars.env >> $GITHUB_ENV
 
     - name: Login to DockerHub
       uses: docker/login-action@v3
@@ -138,7 +140,8 @@ jobs:
         path: ./
 
     - name: Initialize environment variables
-      run: source ./vars.env
+      run: |
+        cat ./vars.env >> $GITHUB_ENV
 
     - name: Verify AMD64 and ARM64 tags
       run: |
