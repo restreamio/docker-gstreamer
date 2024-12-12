@@ -1,0 +1,158 @@
+name: Docker Build Workflow
+
+on:
+  push:
+    branches:
+    - master
+
+  pull_request:
+    branches:
+    - master
+
+concurrency:
+  group: ${{ github.event.repository.name }}-ci-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  DOCKER_TAG_FILE_PREFIX: docker-tag-basename
+
+jobs:
+  init:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set environment variables
+      run: echo "DATE=$(date -u +"%Y-%m-%dT%H-%M-%SZ")" > vars.env
+
+    - name: Upload env vars artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: env-vars
+        path: ./vars.env
+
+  amd64-build:
+    needs: init
+    runs-on: ubuntu-amd64-8core
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Download env vars artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: env-vars
+        path: ./
+
+    - name: Initialize environment variables
+      run: |
+        cat ./vars.env >> $GITHUB_ENV
+
+    - name: Login to DockerHub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_LOGIN }}
+        password: ${{ secrets.DOCKER_PWD }}
+
+    - name: Build AMD64 image
+      run: ./build-latest.sh
+
+    - name: Push AMD64 image
+      run: ./push-latest.sh
+
+    - name: Find and upload AMD64 docker tag
+      run: |
+        TAG_FILE=$(ls ./${DOCKER_TAG_FILE_PREFIX}-*.txt | head -n 1)
+        echo "TAG_FILE=$TAG_FILE" >> $GITHUB_ENV
+
+    - name: Upload AMD64 docker tag
+      uses: actions/upload-artifact@v4
+      with:
+        name: amd64-image-tag
+        path: ${{ env.TAG_FILE }}
+
+  arm64-build:
+    needs: init
+    runs-on: ubuntu-arm64-8core
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Download env vars artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: env-vars
+        path: ./
+
+    - name: Initialize environment variables
+      run: |
+        cat ./vars.env >> $GITHUB_ENV
+
+    - name: Login to DockerHub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_LOGIN }}
+        password: ${{ secrets.DOCKER_PWD }}
+
+    - name: Build ARM64 image
+      run: ./build-latest.sh
+
+    - name: Push ARM64 image
+      run: ./push-latest.sh
+
+    - name: Find and upload AMD64 docker tag
+      run: |
+        TAG_FILE=$(ls ./${DOCKER_TAG_FILE_PREFIX}-*.txt | head -n 1)
+        echo "TAG_FILE=$TAG_FILE" >> $GITHUB_ENV
+
+    - name: Upload ARM64 docker tag
+      uses: actions/upload-artifact@v4
+      with:
+        name: arm64-image-tag
+        path: ${{ env.TAG_FILE }}
+
+  aggregate-images:
+    needs:
+    - amd64-build
+    - arm64-build
+    runs-on: ubuntu-amd64-8core
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Download env vars artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: env-vars
+        path: ./
+
+    - name: Download AMD64 docker tag artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: amd64-image-tag
+        path: ./
+
+    - name: Download ARM64 docker tag artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: arm64-image-tag
+        path: ./
+
+    - name: Initialize environment variables
+      run: |
+        cat ./vars.env >> $GITHUB_ENV
+
+    - name: Verify AMD64 and ARM64 tags
+      run: |
+        cat ./docker-tag-basename-x86_64.txt
+        cat ./docker-tag-basename-aarch64.txt
+
+    - name: Login to DockerHub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_LOGIN }}
+        password: ${{ secrets.DOCKER_PWD }}
+
+    - name: Push multi-architecture Docker images
+      run: ./push-multi-arch-latest.sh
