@@ -42,3 +42,5 @@ docker_build latest-prod
 
 # Build production image optimized binaries and debug symbols
 docker_build latest-prod-dbg
+
+# test
