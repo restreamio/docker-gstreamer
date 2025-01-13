@@ -1,0 +1,1413 @@
+From 9f34b21cd539189e254d21a46d5be9326a0fa014 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Lo=C3=AFc=20Le=20Page?= <llepage@igalia.com>
+Date: Wed, 24 Jul 2024 17:00:24 +0200
+Subject: [PATCH 4/4] compositor: add box-shadow property for sink pads
+
+---
+ .../gst/compositor/compositor.c               | 977 ++++++++++++++----
+ .../gst/compositor/compositor.h               |   1 +
+ 2 files changed, 791 insertions(+), 187 deletions(-)
+
+diff --git a/subprojects/gst-plugins-base/gst/compositor/compositor.c b/subprojects/gst-plugins-base/gst/compositor/compositor.c
+index cc40e50add..980f4b7d85 100644
+--- a/subprojects/gst-plugins-base/gst/compositor/compositor.c
++++ b/subprojects/gst-plugins-base/gst/compositor/compositor.c
+@@ -55,6 +55,16 @@
+  *     one for the top-right corner, the third one for the bottom-right corner,
+  *     and the fourth one for the bottom-left corner
+  *   - all extra values in the array are just ignored
++ * * "box-shadow": The box shadow layers parameters for the picture. It has the
++ *   same effect as the corresponding CSS property. Each shadow layer type is
++ *   drawn in the same order as the one passed when setting the property. Each
++ *   shadow layer is specified with a #GstStructure containing the following
++ *   (optional) fields:
++ *   - "x" the shadow offset-x value as a #gint
++ *   - "y" the shadow offset-y value as a #gint
++ *   - "blur" the shadow blur-radius value as a #guint
++ *   - "spread" the shadow spread-radius value as a #gint
++ *   - "color" the shadow color value as a #guint32 in ARGB order
+  *
+  * ## Sample pipelines
+  * |[
+@@ -108,6 +118,34 @@
+  *   videotestsrc ! video/x-raw,width=400,height=400,format=RGBA ! \
+  *   queue ! comp.
+  * ]| A pipeline to demonstrate rounded corners
++ * |[
++ * gst-launch-1.0 compositor name=comp \
++ *   sink_0::xpos=150 sink_0::ypos=150 \
++ *   sink_0::box-shadow="<[layer,x=15,y=30,spread=10,color=0x88AA1199]>" \
++ *   sink_1::xpos=1300 sink_1::ypos=400 \
++ *   sink_1::box-shadow="<[layer,x=50,y=50,blur=50],[layer,x=10,y=20,color=0xF500B5B5]>" ! \
++ *   video/x-raw,width=1920,height=1080,framerate=30/1 ! \
++ *   videoconvert ! autovideosink \
++ *   videotestsrc ! video/x-raw,width=1280,height=720,format=RGBA ! \
++ *   timeoverlay ! queue ! comp. \
++ *   videotestsrc ! video/x-raw,width=400,height=400,format=RGBA ! \
++ *   queue ! comp.
++ * ]| A pipeline to demonstrate box shadows
++ * |[
++ * gst-launch-1.0 compositor name=comp \
++ *   sink_0::xpos=150 sink_0::ypos=150 \
++ *   sink_0::border-radius="<0,50,200>" \
++ *   sink_0::box-shadow="<[layer,x=15,y=30,spread=10,color=0x88AA1199]>" \
++ *   sink_1::xpos=1300 sink_1::ypos=400 \
++ *   sink_1::border-radius="<400>" \
++ *   sink_1::box-shadow="<[layer,x=50,y=50,blur=50],[layer,x=10,y=20,color=0xF500B5B5]>" ! \
++ *   video/x-raw,width=1920,height=1080,framerate=30/1 ! \
++ *   videoconvert ! autovideosink \
++ *   videotestsrc ! video/x-raw,width=1280,height=720,format=RGBA ! \
++ *   timeoverlay ! queue ! comp. \
++ *   videotestsrc ! video/x-raw,width=400,height=400,format=RGBA ! \
++ *   queue ! comp.
++ * ]| A pipeline to demonstrate box shadows and rounded corners
+  */
+ 
+ #ifdef HAVE_CONFIG_H
+@@ -232,14 +270,24 @@ enum
+   PROP_PAD_OPERATOR,
+   PROP_PAD_SIZING_POLICY,
+   PROP_PAD_BORDER_RADIUS,
++  PROP_PAD_BOX_SHADOW,
+ };
+ 
++typedef struct
++{
++  gint x;
++  gint y;
++  guint blur;
++  gint spread;
++  guint32 color;
++} BoxShadow;
++
+ G_DEFINE_TYPE (GstCompositorPad, gst_compositor_pad,
+     GST_TYPE_VIDEO_AGGREGATOR_PARALLEL_CONVERT_PAD);
+ 
+ static void
+-gst_compositor_pad_get_property (GObject * object, guint prop_id,
+-    GValue * value, GParamSpec * pspec)
++gst_compositor_pad_get_property (GObject *object, guint prop_id,
++    GValue *value, GParamSpec *pspec)
+ {
+   GstCompositorPad *pad = GST_COMPOSITOR_PAD (object);
+ 
+@@ -285,6 +333,31 @@ gst_compositor_pad_get_property (GObject * object, guint prop_id,
+       g_value_unset (&radius);
+     }
+       break;
++    case PROP_PAD_BOX_SHADOW:
++    {
++      GST_OBJECT_LOCK (pad);
++      GArray *box_shadows =
++          pad->box_shadows ? g_array_ref (pad->box_shadows) : NULL;
++      GST_OBJECT_UNLOCK (pad);
++
++      if (box_shadows) {
++        for (guint i = 0; i < box_shadows->len; ++i) {
++          const BoxShadow *shadow = &g_array_index (box_shadows, BoxShadow, i);
++
++          GValue shadow_struct_value = G_VALUE_INIT;
++          g_value_init (&shadow_struct_value, GST_TYPE_STRUCTURE);
++          g_value_take_boxed (&shadow_struct_value,
++              gst_structure_new ("layer", "x", G_TYPE_INT, shadow->x, "y",
++                  G_TYPE_INT, shadow->y, "blur", G_TYPE_UINT, shadow->blur,
++                  "spread", G_TYPE_INT, shadow->spread, "color", G_TYPE_UINT,
++                  shadow->color, NULL));
++          gst_value_array_append_and_take_value (value, &shadow_struct_value);
++        }
++
++        g_array_unref (box_shadows);
++      }
++    }
++      break;
+     default:
+       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+       break;
+@@ -292,8 +365,8 @@ gst_compositor_pad_get_property (GObject * object, guint prop_id,
+ }
+ 
+ static void
+-gst_compositor_pad_set_property (GObject * object, guint prop_id,
+-    const GValue * value, GParamSpec * pspec)
++gst_compositor_pad_set_property (GObject *object, guint prop_id,
++    const GValue *value, GParamSpec *pspec)
+ {
+   GstCompositorPad *pad = GST_COMPOSITOR_PAD (object);
+ 
+@@ -379,6 +452,76 @@ gst_compositor_pad_set_property (GObject * object, guint prop_id,
+           pad->op == COMPOSITOR_OPERATOR_ADD
+           || pad->border_radius.has_rounded_corners);
+       break;
++    case PROP_PAD_BOX_SHADOW:
++    {
++      const guint nb_structs = gst_value_array_get_size (value);
++      GArray *box_shadows = NULL;
++
++      for (guint i = 0; i < nb_structs; ++i) {
++        const GstStructure *shadow_struct =
++            gst_value_get_structure (gst_value_array_get_value (value, i));
++        if (!shadow_struct) {
++          continue;
++        }
++
++        BoxShadow shadow = { };
++        if (!gst_structure_get_int (shadow_struct, "x", &shadow.x)) {
++          shadow.x = 0;
++        }
++
++        if (!gst_structure_get_int (shadow_struct, "y", &shadow.y)) {
++          shadow.y = 0;
++        }
++
++        if (!gst_structure_get_uint (shadow_struct, "blur", &shadow.blur)) {
++          int blur = 0;
++          if (gst_structure_get_int (shadow_struct, "blur", &blur) && blur > 0) {
++            shadow.blur = blur;
++          } else {
++            shadow.blur = 0;
++          }
++        }
++
++        if (!gst_structure_get_int (shadow_struct, "spread", &shadow.spread)) {
++          shadow.spread = 0;
++        }
++
++        if (shadow.x == 0 && shadow.y == 0 && shadow.blur == 0
++            && shadow.spread <= 0) {
++          continue;
++        }
++
++        if (!gst_structure_get_uint (shadow_struct, "color", &shadow.color)) {
++          int color = 0;
++          if (gst_structure_get_int (shadow_struct, "color", &color)) {
++            shadow.color = (guint32) color;
++          } else {
++            shadow.color = 0xFF << 24;
++          }
++        }
++
++        if ((shadow.color & 0xFF000000) == 0) {
++          continue;
++        }
++
++        if (!box_shadows) {
++          box_shadows = g_array_sized_new (FALSE, FALSE, sizeof (BoxShadow), 2);
++        }
++
++        g_array_append_vals (box_shadows, &shadow, 1);
++      }
++
++      GST_OBJECT_LOCK (pad);
++      GArray *array = pad->box_shadows;
++      pad->box_shadows = box_shadows;
++      box_shadows = array;
++      GST_OBJECT_UNLOCK (pad);
++
++      if (box_shadows) {
++        g_array_unref (box_shadows);
++      }
++    }
++      break;
+     default:
+       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+       break;
+@@ -386,9 +529,26 @@ gst_compositor_pad_set_property (GObject * object, guint prop_id,
+ }
+ 
+ static void
+-_mixer_pad_get_output_size (GstCompositor * comp, GstCompositorPad * comp_pad,
+-    gint out_par_n, gint out_par_d, gint * width, gint * height,
+-    gint * x_offset, gint * y_offset)
++gst_compositor_pad_dispose (GObject *object)
++{
++  GstCompositorPad *pad = GST_COMPOSITOR_PAD (object);
++
++  GST_OBJECT_LOCK (pad);
++  GArray *box_shadows = pad->box_shadows;
++  pad->box_shadows = NULL;
++  GST_OBJECT_UNLOCK (pad);
++
++  if (box_shadows) {
++    g_array_unref (box_shadows);
++  }
++
++  G_OBJECT_CLASS (gst_compositor_pad_parent_class)->dispose (object);
++}
++
++static void
++_mixer_pad_get_output_size (GstCompositor *comp, GstCompositorPad *comp_pad,
++    gint out_par_n, gint out_par_d, gint *width, gint *height,
++    gint *x_offset, gint *y_offset)
+ {
+   GstVideoAggregatorPad *vagg_pad = GST_VIDEO_AGGREGATOR_PAD (comp_pad);
+   gint pad_width, pad_height;
+@@ -538,30 +698,70 @@ is_rectangle_contained (const GstVideoRectangle rect1,
+   return FALSE;
+ }
+ 
+-static GstVideoRectangle
+-clamp_rectangle (gint x, gint y, gint w, gint h, gint outer_width,
+-    gint outer_height)
++static void
++extend_rectangle_with_box_shadows (GstVideoRectangle *rect,
++    GstCompositorPad *pad)
+ {
+-  gint x2 = x + w;
+-  gint y2 = y + h;
+-  GstVideoRectangle clamped;
++  GST_OBJECT_LOCK (pad);
++  GArray *box_shadows =
++      pad->box_shadows ? g_array_ref (pad->box_shadows) : NULL;
++  GST_OBJECT_UNLOCK (pad);
++
++  if (box_shadows) {
++    gint xmin = rect->x;
++    gint xmax = rect->x + rect->w;
++    gint ymin = rect->y;
++    gint ymax = rect->y + rect->h;
++
++    for (guint i = 0; i < box_shadows->len; ++i) {
++      const BoxShadow *shadow = &g_array_index (box_shadows, BoxShadow, i);
++
++      gint spread_limit = -2 * shadow->spread;
++      if (rect->w <= spread_limit || rect->h <= spread_limit) {
++        // No shadow because spread is bigger than the image rect
++        continue;
++      }
++
++      gint blur_extent = 2 * shadow->blur;
++      xmin = MIN (xmin, rect->x + shadow->x - shadow->spread - blur_extent);
++      ymin = MIN (ymin, rect->y + shadow->y - shadow->spread - blur_extent);
++      xmax =
++          MAX (xmax,
++          rect->x + shadow->x + rect->w + shadow->spread + blur_extent);
++      ymax =
++          MAX (ymax,
++          rect->y + shadow->y + rect->h + shadow->spread + blur_extent);
++    }
++
++    rect->x = xmin;
++    rect->y = ymin;
++    rect->w = xmax - xmin;
++    rect->h = ymax - ymin;
++
++    g_array_unref (box_shadows);
++  }
++}
++
++static void
++clamp_rectangle (GstVideoRectangle *rect, gint outer_width, gint outer_height)
++{
++  gint x2 = rect->x + rect->w;
++  gint y2 = rect->y + rect->h;
+ 
+   /* Clamp the x/y coordinates of this frame to the output boundaries to cover
+    * the case where (say, with negative xpos/ypos or w/h greater than the output
+    * size) the non-obscured portion of the frame could be outside the bounds of
+    * the video itself and hence not visible at all */
+-  clamped.x = CLAMP (x, 0, outer_width);
+-  clamped.y = CLAMP (y, 0, outer_height);
+-  clamped.w = CLAMP (x2, 0, outer_width) - clamped.x;
+-  clamped.h = CLAMP (y2, 0, outer_height) - clamped.y;
+-
+-  return clamped;
++  rect->x = CLAMP (rect->x, 0, outer_width);
++  rect->y = CLAMP (rect->y, 0, outer_height);
++  rect->w = CLAMP (x2, 0, outer_width) - rect->x;
++  rect->h = CLAMP (y2, 0, outer_height) - rect->y;
+ }
+ 
+ /* Call this with the lock taken */
+ static gboolean
+-_pad_obscures_rectangle (GstVideoAggregator * vagg, GstVideoAggregatorPad * pad,
+-    const GstVideoRectangle rect)
++_pad_image_fully_hide_underneath_rectangle (GstVideoAggregator *vagg,
++    GstVideoAggregatorPad *pad, const GstVideoRectangle rect)
+ {
+   GstVideoRectangle pad_rect;
+   GstCompositorPad *cpad = GST_COMPOSITOR_PAD (pad);
+@@ -605,8 +805,47 @@ _pad_obscures_rectangle (GstVideoAggregator * vagg, GstVideoAggregatorPad * pad,
+   pad_rect.x += x_offset;
+   pad_rect.y += y_offset;
+ 
+-  if (!is_rectangle_contained (rect, pad_rect))
+-    return FALSE;
++  if (!is_rectangle_contained (rect, pad_rect)) {
++    // The pad image rect doesn't fully contain the underneath rectangle,
++    // but maybe one of the pad's shadow layers may still hide it.
++    GST_OBJECT_LOCK (cpad);
++    GArray *box_shadows =
++        cpad->box_shadows ? g_array_ref (cpad->box_shadows) : NULL;
++    GST_OBJECT_UNLOCK (cpad);
++
++    if (!box_shadows) {
++      return FALSE;
++    }
++
++    gboolean is_hidding = FALSE;
++    GstVideoRectangle shadow_rect;
++    for (guint i = 0; i < box_shadows->len; ++i) {
++      const BoxShadow *shadow = &g_array_index (box_shadows, BoxShadow, i);
++
++      if ((shadow->color & 0xFF000000) != 0xFF000000) {
++        continue;
++      }
++
++      gint blur_extent = 2 * shadow->blur;
++      shadow_rect.x = pad_rect.x + shadow->x - shadow->spread + blur_extent;
++      shadow_rect.y = pad_rect.y + shadow->y - shadow->spread + blur_extent;
++
++      gint opaque_extent = 2 * (shadow->spread - blur_extent);
++      shadow_rect.w = pad_rect.w + opaque_extent;
++      shadow_rect.h = pad_rect.h + opaque_extent;
++
++      if (is_rectangle_contained (rect, shadow_rect)) {
++        is_hidding = TRUE;
++        break;
++      }
++    }
++
++    g_array_unref (box_shadows);
++
++    if (!is_hidding) {
++      return FALSE;
++    }
++  }
+ 
+   GST_DEBUG_OBJECT (pad, "Pad %s %ix%i@(%i,%i) obscures rect %ix%i@(%i,%i)",
+       GST_PAD_NAME (pad), pad_rect.w, pad_rect.h, pad_rect.x, pad_rect.y,
+@@ -616,16 +855,16 @@ _pad_obscures_rectangle (GstVideoAggregator * vagg, GstVideoAggregatorPad * pad,
+ }
+ 
+ static void
+-gst_compositor_pad_prepare_frame_start (GstVideoAggregatorPad * pad,
+-    GstVideoAggregator * vagg, GstBuffer * buffer,
+-    GstVideoFrame * prepared_frame)
++gst_compositor_pad_prepare_frame_start (GstVideoAggregatorPad *pad,
++    GstVideoAggregator *vagg, GstBuffer *buffer, GstVideoFrame *prepared_frame)
+ {
+   GstCompositorPad *cpad = GST_COMPOSITOR_PAD (pad);
+   gint width, height;
+   gboolean frame_obscured = FALSE;
+   GList *l;
+-  /* The rectangle representing this frame, clamped to the video's boundaries.
+-   * Due to the clamping, this is different from the frame width/height above. */
++  /* The rectangle representing this frame, including box shadows, clamped
++   * to the video's boundaries. Due to the clamping, this is different from the
++   * frame width/height above. */
+   GstVideoRectangle frame_rect;
+ 
+   /* There's three types of width/height here:
+@@ -652,9 +891,13 @@ gst_compositor_pad_prepare_frame_start (GstVideoAggregatorPad * pad,
+   if (gst_aggregator_pad_is_inactive (GST_AGGREGATOR_PAD (pad)))
+     return;
+ 
+-  frame_rect = clamp_rectangle (cpad->xpos + cpad->x_offset,
+-      cpad->ypos + cpad->y_offset, width, height,
+-      GST_VIDEO_INFO_WIDTH (&vagg->info), GST_VIDEO_INFO_HEIGHT (&vagg->info));
++  frame_rect.x = cpad->xpos + cpad->x_offset;
++  frame_rect.y = cpad->ypos + cpad->y_offset;
++  frame_rect.w = width;
++  frame_rect.h = height;
++  extend_rectangle_with_box_shadows (&frame_rect, cpad);
++  clamp_rectangle (&frame_rect, GST_VIDEO_INFO_WIDTH (&vagg->info),
++      GST_VIDEO_INFO_HEIGHT (&vagg->info));
+ 
+   if (frame_rect.w == 0 || frame_rect.h == 0) {
+     GST_DEBUG_OBJECT (pad, "Resulting frame is zero-width or zero-height "
+@@ -685,7 +928,7 @@ gst_compositor_pad_prepare_frame_start (GstVideoAggregatorPad * pad,
+       continue;
+     }
+ 
+-    if (_pad_obscures_rectangle (vagg, l->data, frame_rect)) {
++    if (_pad_image_fully_hide_underneath_rectangle (vagg, l->data, frame_rect)) {
+       frame_obscured = TRUE;
+       break;
+     }
+@@ -701,8 +944,8 @@ gst_compositor_pad_prepare_frame_start (GstVideoAggregatorPad * pad,
+ }
+ 
+ static void
+-gst_compositor_pad_create_conversion_info (GstVideoAggregatorConvertPad * pad,
+-    GstVideoAggregator * vagg, GstVideoInfo * conversion_info)
++gst_compositor_pad_create_conversion_info (GstVideoAggregatorConvertPad *pad,
++    GstVideoAggregator *vagg, GstVideoInfo *conversion_info)
+ {
+   GstCompositor *self = GST_COMPOSITOR (vagg);
+   GstCompositorPad *cpad = GST_COMPOSITOR_PAD (pad);
+@@ -763,7 +1006,7 @@ gst_compositor_pad_create_conversion_info (GstVideoAggregatorConvertPad * pad,
+ }
+ 
+ static void
+-gst_compositor_pad_class_init (GstCompositorPadClass * klass)
++gst_compositor_pad_class_init (GstCompositorPadClass *klass)
+ {
+   GObjectClass *gobject_class = (GObjectClass *) klass;
+   GstVideoAggregatorPadClass *vaggpadclass =
+@@ -773,6 +1016,7 @@ gst_compositor_pad_class_init (GstCompositorPadClass * klass)
+ 
+   gobject_class->set_property = gst_compositor_pad_set_property;
+   gobject_class->get_property = gst_compositor_pad_get_property;
++  gobject_class->dispose = gst_compositor_pad_dispose;
+ 
+   g_object_class_install_property (gobject_class, PROP_PAD_XPOS,
+       g_param_spec_int ("xpos", "X Position", "X Position of the picture",
+@@ -844,6 +1088,33 @@ gst_compositor_pad_class_init (GstCompositorPadClass * klass)
+               G_PARAM_STATIC_STRINGS),
+           G_PARAM_READWRITE | GST_PARAM_CONTROLLABLE | G_PARAM_STATIC_STRINGS));
+ 
++  /**
++   * GstCompositorPad:box-shadow:
++   *
++   * Specifies box shadows for the picture. It has the same effect as the CSS
++   * "box-shadow" property. Each shadow layer type is drawn in the same order
++   * as the one passed when setting the property. Each shadow layer is
++   * specified with a #GstStructure containing the following (optional) fields:
++   * - "x" the shadow offset-x value as a #gint
++   * - "y" the shadow offset-y value as a #gint
++   * - "blur" the shadow blur-radius value as a #guint
++   * - "spread" the shadow spread-radius value as a #gint
++   * - "color" the shadow color value as a #guint32 in ARGB order
++   *
++   * Since: 1.26
++   */
++  g_object_class_install_property (gobject_class, PROP_PAD_BOX_SHADOW,
++      gst_param_spec_array ("box-shadow", "Box Shadow",
++          "Box shadow layers (one GstStructure per layer) specifying the "
++          "\"x\" (gint), \"y\" (gint), \"blur\" (guint), \"spread\" (gint) "
++          "and \"color\" (guint32 in ARGB order) "
++          "parameters (same syntax as the CSS property)",
++          g_param_spec_boxed ("layer", "Box Shadow Layer",
++              "Box Shadow Layer", GST_TYPE_STRUCTURE,
++              G_PARAM_READWRITE | GST_PARAM_CONTROLLABLE |
++              G_PARAM_STATIC_STRINGS),
++          G_PARAM_READWRITE | GST_PARAM_CONTROLLABLE | G_PARAM_STATIC_STRINGS));
++
+   vaggpadclass->prepare_frame_start =
+       GST_DEBUG_FUNCPTR (gst_compositor_pad_prepare_frame_start);
+ 
+@@ -854,7 +1125,7 @@ gst_compositor_pad_class_init (GstCompositorPadClass * klass)
+ }
+ 
+ static void
+-gst_compositor_pad_init (GstCompositorPad * compo_pad)
++gst_compositor_pad_init (GstCompositorPad *compo_pad)
+ {
+   compo_pad->xpos = DEFAULT_PAD_XPOS;
+   compo_pad->ypos = DEFAULT_PAD_YPOS;
+@@ -891,8 +1162,8 @@ enum
+ };
+ 
+ static void
+-gst_compositor_get_property (GObject * object,
+-    guint prop_id, GValue * value, GParamSpec * pspec)
++gst_compositor_get_property (GObject *object,
++    guint prop_id, GValue *value, GParamSpec *pspec)
+ {
+   GstCompositor *self = GST_COMPOSITOR (object);
+ 
+@@ -917,8 +1188,8 @@ gst_compositor_get_property (GObject * object,
+ }
+ 
+ static void
+-gst_compositor_set_property (GObject * object,
+-    guint prop_id, const GValue * value, GParamSpec * pspec)
++gst_compositor_set_property (GObject *object,
++    guint prop_id, const GValue *value, GParamSpec *pspec)
+ {
+   GstCompositor *self = GST_COMPOSITOR (object);
+ 
+@@ -950,7 +1221,7 @@ GST_ELEMENT_REGISTER_DEFINE (compositor, "compositor", GST_RANK_PRIMARY + 1,
+     GST_TYPE_COMPOSITOR);
+ 
+ static gboolean
+-set_functions (GstCompositor * self, const GstVideoInfo * info)
++set_functions (GstCompositor *self, const GstVideoInfo *info)
+ {
+   gint offset[GST_VIDEO_MAX_COMPONENTS] = { 0, };
+   gint scale[GST_VIDEO_MAX_COMPONENTS] = { 0, };
+@@ -1295,7 +1566,7 @@ set_functions (GstCompositor * self, const GstVideoInfo * info)
+ }
+ 
+ static GstCaps *
+-_fixate_caps (GstAggregator * agg, GstCaps * caps)
++_fixate_caps (GstAggregator *agg, GstCaps *caps)
+ {
+   GstVideoAggregator *vagg = GST_VIDEO_AGGREGATOR (agg);
+   GList *l;
+@@ -1395,7 +1666,7 @@ gst_parallelized_task_thread_func (gpointer data)
+ }
+ 
+ static void
+-gst_parallelized_task_runner_join (GstParallelizedTaskRunner * self)
++gst_parallelized_task_runner_join (GstParallelizedTaskRunner *self)
+ {
+   gboolean joined = FALSE;
+ 
+@@ -1412,7 +1683,7 @@ gst_parallelized_task_runner_join (GstParallelizedTaskRunner * self)
+ }
+ 
+ static void
+-gst_parallelized_task_runner_free (GstParallelizedTaskRunner * self)
++gst_parallelized_task_runner_free (GstParallelizedTaskRunner *self)
+ {
+   gst_parallelized_task_runner_join (self);
+ 
+@@ -1425,7 +1696,7 @@ gst_parallelized_task_runner_free (GstParallelizedTaskRunner * self)
+ }
+ 
+ static GstParallelizedTaskRunner *
+-gst_parallelized_task_runner_new (guint n_threads, GstTaskPool * pool,
++gst_parallelized_task_runner_new (guint n_threads, GstTaskPool *pool,
+     gboolean async_tasks)
+ {
+   GstParallelizedTaskRunner *self;
+@@ -1469,7 +1740,7 @@ gst_parallelized_task_runner_new (guint n_threads, GstTaskPool * pool,
+ }
+ 
+ static void
+-gst_parallelized_task_runner_finish (GstParallelizedTaskRunner * self)
++gst_parallelized_task_runner_finish (GstParallelizedTaskRunner *self)
+ {
+   g_return_if_fail (self->func != NULL);
+ 
+@@ -1480,8 +1751,8 @@ gst_parallelized_task_runner_finish (GstParallelizedTaskRunner * self)
+ }
+ 
+ static void
+-gst_parallelized_task_runner_run (GstParallelizedTaskRunner * self,
+-    GstParallelizedTaskFunc func, gpointer * task_data)
++gst_parallelized_task_runner_run (GstParallelizedTaskRunner *self,
++    GstParallelizedTaskFunc func, gpointer *task_data)
+ {
+   guint n_threads = self->n_threads;
+ 
+@@ -1521,7 +1792,7 @@ gst_parallelized_task_runner_run (GstParallelizedTaskRunner * self,
+ }
+ 
+ static gboolean
+-_negotiated_caps (GstAggregator * agg, GstCaps * caps)
++_negotiated_caps (GstAggregator *agg, GstCaps *caps)
+ {
+   GstCompositor *compositor = GST_COMPOSITOR (agg);
+   GstVideoAggregator *vagg = GST_VIDEO_AGGREGATOR (agg);
+@@ -1620,7 +1891,7 @@ _negotiated_caps (GstAggregator * agg, GstCaps * caps)
+ }
+ 
+ static gboolean
+-gst_composior_stop (GstAggregator * agg)
++gst_composior_stop (GstAggregator *agg)
+ {
+   GstCompositor *self = GST_COMPOSITOR (agg);
+ 
+@@ -1631,7 +1902,7 @@ gst_composior_stop (GstAggregator * agg)
+ }
+ 
+ static gboolean
+-_should_draw_background (GstVideoAggregator * vagg)
++_should_draw_background (GstVideoAggregator *vagg)
+ {
+   GstVideoRectangle bg_rect;
+   gboolean draw = TRUE;
+@@ -1651,7 +1922,7 @@ _should_draw_background (GstVideoAggregator * vagg)
+             (l->data)) == NULL)
+       continue;
+ 
+-    if (_pad_obscures_rectangle (vagg, l->data, bg_rect)) {
++    if (_pad_image_fully_hide_underneath_rectangle (vagg, l->data, bg_rect)) {
+       draw = FALSE;
+       break;
+     }
+@@ -1661,7 +1932,7 @@ _should_draw_background (GstVideoAggregator * vagg)
+ }
+ 
+ static gboolean
+-frames_can_copy (const GstVideoFrame * frame1, const GstVideoFrame * frame2)
++frames_can_copy (const GstVideoFrame *frame1, const GstVideoFrame *frame2)
+ {
+   if (GST_VIDEO_FRAME_FORMAT (frame1) != GST_VIDEO_FRAME_FORMAT (frame2))
+     return FALSE;
+@@ -1672,14 +1943,157 @@ frames_can_copy (const GstVideoFrame * frame1, const GstVideoFrame * frame2)
+   return TRUE;
+ }
+ 
+-struct CompositePadInfo
++typedef struct
++{
++  BoxShadow shadow;
++  GstVideoRectangle dest_rect;
++  GstVideoFrame frame;
++} BoxShadowFrame;
++
++typedef struct
+ {
+   GstVideoFrame *prepared_frame;
+   GstCompositorPad *pad;
+   GstCompositorBlendMode blend_mode;
+-};
+ 
+-struct CompositeTask
++  gboolean has_rounded_corners;
++  guint border_radius[4];
++
++  BoxShadowFrame *box_shadows;
++  guint box_shadows_len;
++} CompositePadInfo;
++
++static gboolean
++extract_composite_pad_info (GstCompositorPad *pad, CompositePadInfo *info)
++{
++  GstVideoFrame *prepared_frame =
++      gst_video_aggregator_pad_get_prepared_frame (GST_VIDEO_AGGREGATOR_PAD
++      (pad));
++  if (!prepared_frame) {
++    return FALSE;
++  }
++
++  memset (info, 0, sizeof (CompositePadInfo));
++  info->prepared_frame = prepared_frame;
++  info->pad = pad;
++
++  switch (pad->op) {
++    case COMPOSITOR_OPERATOR_SOURCE:
++      info->blend_mode = COMPOSITOR_BLEND_MODE_SOURCE;
++      break;
++    case COMPOSITOR_OPERATOR_ADD:
++      info->blend_mode = COMPOSITOR_BLEND_MODE_ADD;
++      break;
++    case COMPOSITOR_OPERATOR_OVER:
++    default:
++      info->blend_mode = COMPOSITOR_BLEND_MODE_OVER;
++      break;
++  }
++
++  // Rounded corners
++  if (pad->border_radius.has_rounded_corners
++      && GST_VIDEO_INFO_HAS_ALPHA (&prepared_frame->info)) {
++    // All color formats with an alpha component, currently composed at this
++    // stage if the rounded corners are enabled, have common characteristics:
++    // - the alpha component depth is always 8 or 16 bits
++    // - in planar mode, the alpha plane has the same width and height as the
++    //   Y plane (no subsampling)
++    guint alpha_comp_depth = GST_VIDEO_FRAME_COMP_DEPTH (prepared_frame, 3);
++    if ((alpha_comp_depth != 8 && alpha_comp_depth != 16)
++        || prepared_frame->info.finfo->w_sub[3] != 0
++        || prepared_frame->info.finfo->h_sub[3] != 0) {
++      GST_FIXME_OBJECT (pad,
++          "Unexpected source frame video format %s, disabling rounding corners for this pad",
++          gst_video_format_to_string (prepared_frame->info.finfo->format));
++    } else {
++      guint max_border_radius =
++          MIN (MAX (0, (prepared_frame->info.width - 1) >> 1), MAX (0,
++              (prepared_frame->info.height - 1) >> 1));
++
++      info->border_radius[0] =
++          MIN (max_border_radius, pad->border_radius.top_left);
++      info->border_radius[1] =
++          MIN (max_border_radius, pad->border_radius.top_right);
++      info->border_radius[2] =
++          MIN (max_border_radius, pad->border_radius.bottom_left);
++      info->border_radius[3] =
++          MIN (max_border_radius, pad->border_radius.bottom_right);
++      info->has_rounded_corners = (info->border_radius[0] > 0
++          || info->border_radius[1] > 0 || info->border_radius[2] > 0
++          || info->border_radius[3] > 0);
++
++      if (info->has_rounded_corners
++          && info->blend_mode == COMPOSITOR_BLEND_MODE_SOURCE) {
++        info->blend_mode = COMPOSITOR_BLEND_MODE_OVER;
++      }
++    }
++  }
++  // Shadows
++  GST_OBJECT_LOCK (pad);
++  GArray *box_shadows =
++      pad->box_shadows ? g_array_ref (pad->box_shadows) : NULL;
++  GST_OBJECT_UNLOCK (pad);
++
++  if (box_shadows) {
++    info->box_shadows = g_new0 (BoxShadowFrame, box_shadows->len);
++
++    for (guint i = 0; i < box_shadows->len; ++i) {
++      BoxShadowFrame *shadow_frame = info->box_shadows + info->box_shadows_len;
++      shadow_frame->shadow = g_array_index (box_shadows, BoxShadow, i);
++
++      gint spread_limit = -2 * shadow_frame->shadow.spread;
++      if (prepared_frame->info.width <= spread_limit
++          || prepared_frame->info.height <= spread_limit) {
++        // No shadow because the substracted spread is bigger than the pad image
++        continue;
++      }
++
++      shadow_frame->dest_rect.w = prepared_frame->info.width - spread_limit;
++      shadow_frame->dest_rect.h = prepared_frame->info.height - spread_limit;
++
++      shadow_frame->shadow.blur =
++          MIN (shadow_frame->shadow.blur, MIN (shadow_frame->dest_rect.w >> 2,
++              shadow_frame->dest_rect.h >> 2));
++
++      gint blur_extent = 2 * shadow_frame->shadow.blur;
++      shadow_frame->dest_rect.x =
++          pad->xpos + pad->x_offset + shadow_frame->shadow.x -
++          shadow_frame->shadow.spread - blur_extent;
++      shadow_frame->dest_rect.y =
++          pad->ypos + pad->y_offset + shadow_frame->shadow.y -
++          shadow_frame->shadow.spread - blur_extent;
++
++      gint total_blur_extent = 2 * blur_extent;
++      shadow_frame->dest_rect.w += total_blur_extent;
++      shadow_frame->dest_rect.h += total_blur_extent;
++
++      gsize size = 4 * shadow_frame->dest_rect.w * shadow_frame->dest_rect.h;
++      guint8 *data = g_malloc0 (size);
++      GstBuffer *buffer = gst_buffer_new_wrapped (data, size);
++
++      GstVideoInfo video_info;
++#if G_BYTE_ORDER == G_LITTLE_ENDIAN
++      GstVideoFormat video_format = GST_VIDEO_FORMAT_BGRA;
++#else
++      GstVideoFormat video_format = GST_VIDEO_FORMAT_ARGB;
++#endif
++      if (gst_video_info_set_format (&video_info, video_format,
++              shadow_frame->dest_rect.w, shadow_frame->dest_rect.h)
++          && gst_video_frame_map (&shadow_frame->frame, &video_info, buffer,
++              GST_MAP_READWRITE)) {
++        info->box_shadows_len++;
++      }
++
++      gst_buffer_unref (buffer);
++    }
++
++    g_array_unref (box_shadows);
++  }
++
++  return TRUE;
++}
++
++typedef struct
+ {
+   GstCompositor *compositor;
+   GstVideoFrame *out_frame;
+@@ -1687,12 +2101,12 @@ struct CompositeTask
+   guint dst_line_end;
+   gboolean draw_background;
+   guint n_pads;
+-  struct CompositePadInfo *pads_info;
+-};
++  CompositePadInfo *pads_info;
++} CompositeTask;
+ 
+ static void
+-_draw_background (GstCompositor * comp, GstVideoFrame * outframe,
+-    guint y_start, guint y_end, BlendFunction * composite)
++_draw_background (GstCompositor *comp, GstVideoFrame *outframe,
++    guint y_start, guint y_end, BlendFunction *composite)
+ {
+   *composite = comp->blend;
+ 
+@@ -1750,96 +2164,81 @@ _draw_background (GstCompositor * comp, GstVideoFrame * outframe,
+ }
+ 
+ static void
+-blend_pads (struct CompositeTask *comp)
++cut_off_rounded_corners (const GstVideoRectangle *visible_rect,
++    const guint *border_radius, GstVideoFrame *frame)
+ {
+-  BlendFunction composite;
+-  guint i;
+-
+-  composite = comp->compositor->blend;
+-
+-  if (comp->draw_background) {
+-    _draw_background (comp->compositor, comp->out_frame, comp->dst_line_start,
+-        comp->dst_line_end, &composite);
+-  }
+-
+-  for (i = 0; i < comp->n_pads; i++) {
+-    composite (comp->pads_info[i].prepared_frame,
+-        comp->pads_info[i].pad->xpos + comp->pads_info[i].pad->x_offset,
+-        comp->pads_info[i].pad->ypos + comp->pads_info[i].pad->y_offset,
+-        comp->pads_info[i].pad->alpha, comp->out_frame, comp->dst_line_start,
+-        comp->dst_line_end, comp->pads_info[i].blend_mode);
+-  }
+-}
+-
+-static void
+-cut_off_rounded_corners (GstCompositorPad * pad, GstVideoFrame * frame)
+-{
+-  // All color formats with an alpha component, currently composed at this
+-  // stage, have common characteristics:
+-  // - the alpha component depth is always 8 or 16 bits
+-  // - in planar mode, the alpha plane has the same width and height as the Y
+-  //   plane (no subsampling)
+-  guint alpha_comp_depth = GST_VIDEO_FRAME_COMP_DEPTH (frame, 3);
+-  if ((alpha_comp_depth != 8 && alpha_comp_depth != 16)
+-      || frame->info.finfo->w_sub[3] != 0 || frame->info.finfo->h_sub[3] != 0) {
+-    GST_FIXME_OBJECT (pad, "Unexpected source frame video format %s",
+-        gst_video_format_to_string (frame->info.finfo->format));
+-    return;
+-  }
+-
+-  guint max_border_radius = MIN (MAX (0, (frame->info.width - 1) >> 1), MAX (0,
+-          (frame->info.height - 1) >> 1));
+-
+-  guint border_radius[4] = {
+-    MIN (max_border_radius, pad->border_radius.top_left),
+-    MIN (max_border_radius, pad->border_radius.top_right),
+-    MIN (max_border_radius, pad->border_radius.bottom_left),
+-    MIN (max_border_radius, pad->border_radius.bottom_right)
+-  };
+-
++  gboolean use_16bits_per_component =
++      (GST_VIDEO_FRAME_COMP_DEPTH (frame, 3) == 16);
+   guint8 *alpha_data = GST_VIDEO_FRAME_COMP_DATA (frame, 3);
+   guint alpha_comp_stride = GST_VIDEO_FRAME_COMP_PSTRIDE (frame, 3);
+   guint line_stride = GST_VIDEO_FRAME_COMP_STRIDE (frame, 3);
+ 
++  g_assert (visible_rect->x >= 0);
++  g_assert (visible_rect->y >= 0);
++  g_assert (visible_rect->w > 0);
++  g_assert (visible_rect->h > 0);
++
++  guint last_visible_line = visible_rect->y + visible_rect->h - 1;
++  guint last_visible_col = visible_rect->x + visible_rect->w - 1;
++
+   for (gint i = 0; i < 4; ++i) {
+     guint radius = border_radius[i];
+     if (radius > 0) {
+-      guint radius2 = radius * radius;
++      guint first_line, last_line;
++      if (i < 2) {
++        // Top corners
++        first_line = visible_rect->y;
++        last_line = MIN (radius, last_visible_line);
++      } else {
++        // Bottom corners
++        first_line = MAX (frame->info.height - 1 - radius, visible_rect->y);
++        last_line = last_visible_line;
++      }
+ 
+-      for (guint y = 0; y <= radius; ++y) {
+-        guint dy = radius - y;
+-        guint dy2 = dy * dy;
++      guint first_col, last_col;
++      if (i % 2) {
++        // Right corners
++        first_col = MAX (frame->info.width - 1 - radius, visible_rect->x);
++        last_col = last_visible_col;
++      } else {
++        // Left corners
++        first_col = visible_rect->x;
++        last_col = MIN (radius, last_visible_col);
++      }
++
++      guint radius2 = radius * radius;
+ 
+-        guint8 *line = alpha_data;
++      for (guint y = first_line; y <= last_line; ++y) {
++        guint dy;
+         if (i < 2) {
+-          // Top
+-          line += y * line_stride;
++          // Top corners
++          dy = radius - y;
+         } else {
+-          // Bottom
+-          line += (frame->info.height - 1 - y) * line_stride;
++          // Bottom corners
++          dy = radius - (frame->info.height - 1 - y);
+         }
++        guint dy2 = dy * dy;
++        guint8 *line = alpha_data + y * line_stride;
++
++        for (guint x = first_col; x <= last_col; ++x) {
++          guint dx;
++          if (i % 2) {
++            // Right corners
++            dx = radius - (frame->info.width - 1 - x);
++          } else {
++            // Left corners
++            dx = radius - x;
++          }
+ 
+-        for (guint x = 0; x <= radius; ++x) {
+-          guint dx = radius - x;
+           float dist = dx * dx + dy2;
+-
+           if (dist >= radius2) {
+             // The falloff function has a width of 2 pixels, so we add 1 pixel
+-            // to the distance to correctly center the arc rasterisation.
++            // to the distance to correctly center the arc rasterization.
+             dist = sqrt (dist) - radius + 1;
+             float coeff = CLAMP (1.f - dist * dist * dist / 8.f, 0.f, 1.f);
+ 
+-            guint8 *component;
+-            if (i % 2) {
+-              // Right
+-              component =
+-                  line + alpha_comp_stride * (frame->info.width - 1 - x);
+-            } else {
+-              // Left
+-              component = line + alpha_comp_stride * x;
+-            }
+-
+-            if (alpha_comp_depth == 16) {
++            guint8 *component = line + x * alpha_comp_stride;
++            if (use_16bits_per_component) {
+               *(guint16 *) component *= coeff;
+             } else {
+               *component *= coeff;
+@@ -1851,15 +2250,236 @@ cut_off_rounded_corners (GstCompositorPad * pad, GstVideoFrame * frame)
+   }
+ }
+ 
++static float
++compute_rounded_corner_square_dist (guint x, guint y, guint width, guint height,
++    guint radius, gint corner_index)
++{
++  guint dy;
++  if (corner_index < 2) {
++    // Top corners
++    if (y > radius) {
++      return -1.f;
++    }
++    dy = radius - y;
++  } else {
++    // Bottom corners
++    if (y < height - 1 - radius) {
++      return -1.f;
++    }
++    dy = radius - (height - 1 - y);
++  }
++
++  guint dx;
++  if (corner_index % 2) {
++    // Right corners
++    if (x < width - 1 - radius) {
++      return -1.f;
++    }
++    dx = radius - (width - 1 - x);
++  } else {
++    // Left corners
++    if (x > radius) {
++      return -1.f;
++    }
++    dx = radius - x;
++  }
++
++  return dx * dx + dy * dy;
++}
++
++static float
++compute_box_shadow_alpha_coeff (guint x, guint y,
++    const BoxShadowFrame *shadow, float blur_coeff, const guint *border_radius)
++{
++  float alpha_coeff = 1.f;
++  guint blur_extent = shadow->shadow.blur << 1;
++  guint blur_falloff_length = blur_extent << 1;
++  gboolean is_at_corner = FALSE;
++
++  for (gint i = 0; i < 4; ++i) {
++    guint radius = border_radius[i];
++    if (radius > MAX (0, -shadow->shadow.spread)) {
++      radius += shadow->shadow.spread;
++
++      if (shadow->shadow.blur > 0) {
++        radius += blur_extent;
++        if (radius <= blur_falloff_length) {
++          continue;
++        }
++      }
++
++      float dist =
++          compute_rounded_corner_square_dist (x, y, shadow->dest_rect.w,
++          shadow->dest_rect.h, radius, i);
++      if (dist < 0.f) {
++        continue;
++      }
++
++      if (shadow->shadow.blur > 0) {
++        guint blur_start_radius = radius - blur_falloff_length;
++        if (dist >= blur_start_radius * blur_start_radius) {
++          dist = sqrt (dist) - blur_start_radius + 1;
++          alpha_coeff *= exp (-dist * dist * dist / blur_coeff);
++          is_at_corner = TRUE;
++        }
++      } else if (dist >= radius * radius) {
++        // The falloff function has a width of 2 pixels, so we add 1 pixel
++        // to the distance to correctly center the arc rasterization.
++        dist = sqrt (dist) - radius + 1;
++        alpha_coeff *= CLAMP (1.f - dist * dist * dist / 8.f, 0.f, 1.f);
++        is_at_corner = TRUE;
++      }
++    }
++  }
++
++  if (!is_at_corner && shadow->shadow.blur > 0) {
++    float dist = 0.f;
++    if (x < blur_falloff_length) {
++      dist = blur_falloff_length - x;
++    } else if (x + blur_falloff_length >= shadow->dest_rect.w) {
++      dist = x - (shadow->dest_rect.w - 1 - blur_falloff_length);
++    }
++    if (dist > 0.f) {
++      alpha_coeff *= exp (-dist * dist * dist / blur_coeff);
++    }
++
++    dist = 0.f;
++    if (y < blur_falloff_length) {
++      dist = blur_falloff_length - y;
++    } else if (y + blur_falloff_length >= shadow->dest_rect.h) {
++      dist = y - (shadow->dest_rect.h - 1 - blur_falloff_length);
++    }
++    if (dist > 0.f) {
++      alpha_coeff *= exp (-dist * dist * dist / blur_coeff);
++    }
++  }
++
++  return alpha_coeff;
++}
++
++static void
++fill_shadow_frame (const GstVideoRectangle *visible_rect,
++    const BoxShadowFrame *shadow, const CompositePadInfo *info)
++{
++  g_assert (visible_rect->x >= 0);
++  g_assert (visible_rect->y >= 0);
++  g_assert (visible_rect->w > 0);
++  g_assert (visible_rect->h > 0);
++  g_assert (shadow->dest_rect.w > 0);
++  g_assert (shadow->dest_rect.h > 0);
++
++  guint8 *image_data = GST_VIDEO_FRAME_PLANE_DATA (&shadow->frame, 0);
++  guint line_stride = GST_VIDEO_FRAME_PLANE_STRIDE (&shadow->frame, 0);
++  guint alpha_comp_offset = GST_VIDEO_FRAME_COMP_POFFSET (&shadow->frame, 3);
++
++  guint last_visible_line = visible_rect->y + visible_rect->h - 1;
++  guint last_visible_col = visible_rect->x + visible_rect->w - 1;
++
++  gboolean modify_alpha = (shadow->shadow.blur > 0
++      || info->has_rounded_corners);
++
++  float blur_coeff = 1.f;
++  if (shadow->shadow.blur > 0) {
++    // To optimize the rendering, the shadow blur effect is not a real gaussian
++    // blur but an approximation of the blur result as it looks in a web browser
++    // when using the CSS box-shadow property.
++    // The approximated equation used to compute the blurred pixel alpha coeff
++    // is: alpha(d) = exp(- d.d.d / blur_coeff) with d the distance between the
++    // pixel and the closest non-blurred pixel.
++    blur_coeff =
++        12 * shadow->shadow.blur * shadow->shadow.blur * shadow->shadow.blur +
++        8;
++  }
++
++  for (guint y = visible_rect->y; y <= last_visible_line; ++y) {
++    guint8 *line = image_data + y * line_stride;
++
++    for (guint x = visible_rect->x; x <= last_visible_col; ++x) {
++      guint32 *pixel = (guint32 *) line + x;
++      *pixel = shadow->shadow.color;
++
++      if (modify_alpha) {
++        float coeff = compute_box_shadow_alpha_coeff (x, y, shadow, blur_coeff,
++            info->border_radius);
++        *((guint8 *) pixel + alpha_comp_offset) *= coeff;
++      }
++    }
++  }
++}
++
++static gboolean
++has_visible_src_rect (GstVideoRectangle *visible_src_rect_out,
++    const GstVideoRectangle *dest_rect, const CompositeTask *task)
++{
++  visible_src_rect_out->x = MAX (0, -dest_rect->x);
++  visible_src_rect_out->y = MAX (0, (gint) task->dst_line_start - dest_rect->y);
++  visible_src_rect_out->w =
++      MIN (dest_rect->w, task->out_frame->info.width - dest_rect->x);
++  visible_src_rect_out->h =
++      MIN (dest_rect->h, (gint) task->dst_line_end - dest_rect->y);
++
++  visible_src_rect_out->w -= visible_src_rect_out->x;
++  visible_src_rect_out->h -= visible_src_rect_out->y;
++
++  return (visible_src_rect_out->w > 0 && visible_src_rect_out->h > 0);
++}
++
++static void
++blend_pads (CompositeTask *comp)
++{
++  BlendFunction composite = comp->compositor->blend;
++
++  // Draw background
++  if (comp->draw_background) {
++    _draw_background (comp->compositor, comp->out_frame, comp->dst_line_start,
++        comp->dst_line_end, &composite);
++  }
++  // Compose all layers above the background
++  GstVideoRectangle visible_src_rect;
++  for (guint i = 0; i < comp->n_pads; ++i) {
++    const CompositePadInfo *info = comp->pads_info + i;
++
++    const GstVideoRectangle dest_rect = {
++      info->pad->xpos + info->pad->x_offset,
++      info->pad->ypos + info->pad->y_offset,
++      info->prepared_frame->info.width,
++      info->prepared_frame->info.height
++    };
++
++    // Cut-off rounded corners from the input pad frame
++    if (info->has_rounded_corners) {
++      if (has_visible_src_rect (&visible_src_rect, &dest_rect, comp)) {
++        cut_off_rounded_corners (&visible_src_rect, info->border_radius,
++            info->prepared_frame);
++      }
++    }
++    // Compute and compose the box shadows
++    for (guint j = 0; j < info->box_shadows_len; ++j) {
++      BoxShadowFrame *shadow = info->box_shadows + j;
++      if (has_visible_src_rect (&visible_src_rect, &shadow->dest_rect, comp)) {
++        fill_shadow_frame (&visible_src_rect, shadow, info);
++        composite (&shadow->frame, shadow->dest_rect.x, shadow->dest_rect.y,
++            info->pad->alpha, comp->out_frame, comp->dst_line_start,
++            comp->dst_line_end, COMPOSITOR_BLEND_MODE_OVER);
++      }
++    }
++
++    // Compose the input pad frame itself
++    composite (info->prepared_frame, dest_rect.x, dest_rect.y, info->pad->alpha,
++        comp->out_frame, comp->dst_line_start, comp->dst_line_end,
++        info->blend_mode);
++  }
++}
++
+ static GstFlowReturn
+-gst_compositor_aggregate_frames (GstVideoAggregator * vagg, GstBuffer * outbuf)
++gst_compositor_aggregate_frames (GstVideoAggregator *vagg, GstBuffer *outbuf)
+ {
+   GstCompositor *compositor = GST_COMPOSITOR (vagg);
+   GList *l;
+   GstVideoFrame out_frame, intermediate_frame, *outframe;
+   gboolean draw_background;
+   guint drawn_a_pad = FALSE;
+-  struct CompositePadInfo *pads_info;
++  CompositePadInfo *pads_info;
+   guint i, n_pads = 0;
+ 
+   if (!gst_video_frame_map (&out_frame, &vagg->info, outbuf, GST_MAP_WRITE)) {
+@@ -1902,52 +2522,25 @@ gst_compositor_aggregate_frames (GstVideoAggregator * vagg, GstBuffer * outbuf)
+   if (n_pads == 0)
+     draw_background = TRUE;
+ 
+-  pads_info = g_newa (struct CompositePadInfo, n_pads);
++  pads_info = g_new0 (CompositePadInfo, n_pads + 1);
+   n_pads = 0;
+ 
+   for (l = GST_ELEMENT (vagg)->sinkpads; l; l = l->next) {
+-    GstVideoAggregatorPad *pad = l->data;
+-    GstCompositorPad *compo_pad = GST_COMPOSITOR_PAD (pad);
+-    GstVideoFrame *prepared_frame =
+-        gst_video_aggregator_pad_get_prepared_frame (pad);
+-    GstCompositorBlendMode blend_mode = COMPOSITOR_BLEND_MODE_OVER;
+-
+-    switch (compo_pad->op) {
+-      case COMPOSITOR_OPERATOR_SOURCE:
+-        blend_mode = COMPOSITOR_BLEND_MODE_SOURCE;
+-        break;
+-      case COMPOSITOR_OPERATOR_OVER:
+-        blend_mode = COMPOSITOR_BLEND_MODE_OVER;
+-        break;
+-      case COMPOSITOR_OPERATOR_ADD:
+-        blend_mode = COMPOSITOR_BLEND_MODE_ADD;
+-        break;
+-      default:
+-        g_assert_not_reached ();
+-        break;
+-    }
++    GstCompositorPad *compo_pad = GST_COMPOSITOR_PAD (l->data);
++    CompositePadInfo *compo_info = pads_info + n_pads;
+ 
+-    if (prepared_frame != NULL) {
++    if (extract_composite_pad_info (compo_pad, compo_info)) {
+       /* If this is the first pad we're drawing, and we didn't draw the
+-       * background, and @prepared_frame has the same format, height, and width
+-       * as @outframe, then we can just copy it as-is. Subsequent pads (if any)
+-       * will be composited on top of it. */
++       * background, and there is neither rounded corners nor shadows, and
++       * @prepared_frame has the same format, height, and width as @outframe,
++       * then we can just copy it as-is. Subsequent pads (if any) will be
++       * composited on top of it. */
+       if (!drawn_a_pad && !draw_background &&
+-          frames_can_copy (prepared_frame, outframe)) {
+-        gst_video_frame_copy (outframe, prepared_frame);
++          !compo_info->has_rounded_corners &&
++          !compo_info->box_shadows &&
++          frames_can_copy (compo_info->prepared_frame, outframe)) {
++        gst_video_frame_copy (outframe, compo_info->prepared_frame);
+       } else {
+-        if (compo_pad->border_radius.has_rounded_corners
+-            && GST_VIDEO_INFO_HAS_ALPHA (&prepared_frame->info)) {
+-          if (blend_mode == COMPOSITOR_BLEND_MODE_SOURCE) {
+-            blend_mode = COMPOSITOR_BLEND_MODE_OVER;
+-          }
+-
+-          cut_off_rounded_corners (compo_pad, prepared_frame);
+-        }
+-
+-        pads_info[n_pads].pad = compo_pad;
+-        pads_info[n_pads].prepared_frame = prepared_frame;
+-        pads_info[n_pads].blend_mode = blend_mode;
+         n_pads++;
+       }
+       drawn_a_pad = TRUE;
+@@ -1957,13 +2550,13 @@ gst_compositor_aggregate_frames (GstVideoAggregator * vagg, GstBuffer * outbuf)
+   {
+     guint n_threads, lines_per_thread;
+     guint out_height;
+-    struct CompositeTask *tasks;
+-    struct CompositeTask **tasks_p;
++    CompositeTask *tasks;
++    CompositeTask **tasks_p;
+ 
+     n_threads = compositor->blend_runner->n_threads;
+ 
+-    tasks = g_newa (struct CompositeTask, n_threads);
+-    tasks_p = g_newa (struct CompositeTask *, n_threads);
++    tasks = g_newa (CompositeTask, n_threads);
++    tasks_p = g_newa (CompositeTask *, n_threads);
+ 
+     out_height = GST_VIDEO_FRAME_HEIGHT (outframe);
+     lines_per_thread = (out_height + n_threads - 1) / n_threads;
+@@ -1988,6 +2581,16 @@ gst_compositor_aggregate_frames (GstVideoAggregator * vagg, GstBuffer * outbuf)
+         (GstParallelizedTaskFunc) blend_pads, (gpointer *) tasks_p);
+   }
+ 
++  for (guint i = 0; i < n_pads; ++i) {
++    CompositePadInfo *pad_info = pads_info + i;
++
++    for (guint j = 0; j < pad_info->box_shadows_len; ++j) {
++      gst_video_frame_unmap (&pad_info->box_shadows[j].frame);
++    }
++    g_free (pad_info->box_shadows);
++  }
++  g_free (pads_info);
++
+   GST_OBJECT_UNLOCK (vagg);
+ 
+   if (compositor->intermediate_frame) {
+@@ -2003,8 +2606,8 @@ gst_compositor_aggregate_frames (GstVideoAggregator * vagg, GstBuffer * outbuf)
+ }
+ 
+ static GstPad *
+-gst_compositor_request_new_pad (GstElement * element, GstPadTemplate * templ,
+-    const gchar * req_name, const GstCaps * caps)
++gst_compositor_request_new_pad (GstElement *element, GstPadTemplate *templ,
++    const gchar *req_name, const GstCaps *caps)
+ {
+   GstPad *newpad;
+ 
+@@ -2028,7 +2631,7 @@ could_not_create:
+ }
+ 
+ static void
+-gst_compositor_release_pad (GstElement * element, GstPad * pad)
++gst_compositor_release_pad (GstElement *element, GstPad *pad)
+ {
+   GstCompositor *compositor;
+ 
+@@ -2043,7 +2646,7 @@ gst_compositor_release_pad (GstElement * element, GstPad * pad)
+ }
+ 
+ static gboolean
+-src_pad_mouse_event (GstElement * element, GstPad * pad, gpointer user_data)
++src_pad_mouse_event (GstElement *element, GstPad *pad, gpointer user_data)
+ {
+   GstVideoAggregator *vagg = GST_VIDEO_AGGREGATOR_CAST (element);
+   GstCompositor *comp = GST_COMPOSITOR (element);
+@@ -2086,7 +2689,7 @@ src_pad_mouse_event (GstElement * element, GstPad * pad, gpointer user_data)
+ }
+ 
+ static gboolean
+-_src_event (GstAggregator * agg, GstEvent * event)
++_src_event (GstAggregator *agg, GstEvent *event)
+ {
+   GstNavigationEventType event_type;
+ 
+@@ -2116,7 +2719,7 @@ _src_event (GstAggregator * agg, GstEvent * event)
+ }
+ 
+ static gboolean
+-_sink_query (GstAggregator * agg, GstAggregatorPad * bpad, GstQuery * query)
++_sink_query (GstAggregator *agg, GstAggregatorPad *bpad, GstQuery *query)
+ {
+   switch (GST_QUERY_TYPE (query)) {
+     case GST_QUERY_ALLOCATION:{
+@@ -2158,7 +2761,7 @@ _sink_query (GstAggregator * agg, GstAggregatorPad * bpad, GstQuery * query)
+ }
+ 
+ static void
+-gst_compositor_finalize (GObject * object)
++gst_compositor_finalize (GObject *object)
+ {
+   GstCompositor *compositor = GST_COMPOSITOR (object);
+ 
+@@ -2171,7 +2774,7 @@ gst_compositor_finalize (GObject * object)
+ 
+ /* GObject boilerplate */
+ static void
+-gst_compositor_class_init (GstCompositorClass * klass)
++gst_compositor_class_init (GstCompositorClass *klass)
+ {
+   GObjectClass *gobject_class = (GObjectClass *) klass;
+   GstElementClass *gstelement_class = (GstElementClass *) klass;
+@@ -2265,7 +2868,7 @@ gst_compositor_class_init (GstCompositorClass * klass)
+ }
+ 
+ static void
+-gst_compositor_init (GstCompositor * self)
++gst_compositor_init (GstCompositor *self)
+ {
+   /* initialize variables */
+   self->background = DEFAULT_BACKGROUND;
+@@ -2275,7 +2878,7 @@ gst_compositor_init (GstCompositor * self)
+ 
+ /* GstChildProxy implementation */
+ static GObject *
+-gst_compositor_child_proxy_get_child_by_index (GstChildProxy * child_proxy,
++gst_compositor_child_proxy_get_child_by_index (GstChildProxy *child_proxy,
+     guint index)
+ {
+   GstCompositor *compositor = GST_COMPOSITOR (child_proxy);
+@@ -2291,7 +2894,7 @@ gst_compositor_child_proxy_get_child_by_index (GstChildProxy * child_proxy,
+ }
+ 
+ static guint
+-gst_compositor_child_proxy_get_children_count (GstChildProxy * child_proxy)
++gst_compositor_child_proxy_get_children_count (GstChildProxy *child_proxy)
+ {
+   guint count = 0;
+   GstCompositor *compositor = GST_COMPOSITOR (child_proxy);
+@@ -2315,7 +2918,7 @@ gst_compositor_child_proxy_init (gpointer g_iface, gpointer iface_data)
+ 
+ /* Element registration */
+ static gboolean
+-plugin_init (GstPlugin * plugin)
++plugin_init (GstPlugin *plugin)
+ {
+   GST_DEBUG_CATEGORY_INIT (gst_compositor_debug, "compositor", 0, "compositor");
+ 
+diff --git a/subprojects/gst-plugins-base/gst/compositor/compositor.h b/subprojects/gst-plugins-base/gst/compositor/compositor.h
+index 1b48c1b035..72185e5a4c 100644
+--- a/subprojects/gst-plugins-base/gst/compositor/compositor.h
++++ b/subprojects/gst-plugins-base/gst/compositor/compositor.h
+@@ -177,6 +177,7 @@ struct _GstCompositorPad
+     guint bottom_left;
+     gboolean has_rounded_corners;
+   } border_radius;
++  GArray *box_shadows;
+ 
+   GstCompositorOperator op;
+ 
+-- 
+2.43.0
