@@ -25,9 +25,9 @@ else
 fi
 
 git apply /compile-patch/0001-baseparse-always-update-the-input-pts-if-available-from.patch
-git apply /compile-patch/0001-compositor-add-rounded-corners-property-for-sink-pad.patch
-git apply /compile-patch/0001-pad-Check-data-NULL-ness-when-probes-are-stopped-fixed-in-1.24.8.patch
-git apply /compile-patch/0001-Reduce-logs-verbosity-in-webrtcbin-when-a-FEC-decode.patch
+git apply /compile-patch/0002-Reduce-logs-verbosity-in-webrtcbin-when-a-FEC-decode.patch
+git apply /compile-patch/0003-compositor-add-rounded-corners-property-for-sink-pad.patch
+git apply /compile-patch/0004-compositor-add-box-shadow-property-for-sink-pads.patch
 
 # This is needed for other plugins to be built properly
 ninja -C build install
