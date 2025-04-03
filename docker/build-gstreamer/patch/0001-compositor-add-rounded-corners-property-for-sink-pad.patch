@@ -1,7 +1,7 @@
-From 1c2f202fb910c0db0a7311597e484962bf199be6 Mon Sep 17 00:00:00 2001
+From dd260de0def61760196b76cf33a7bda62280db40 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Lo=C3=AFc=20Le=20Page?= <llepage@igalia.com>
-Date: Wed, 17 Jul 2024 12:53:20 +0200
-Subject: [PATCH 3/4] compositor: add rounded corners property for sink pads
+Date: Thu, 18 Jul 2024 18:34:55 +0200
+Subject: [PATCH] compositor: add rounded corners property for sink pads
 
 ---
  .../gst/compositor/compositor.c               | 239 +++++++++++++++++-
@@ -360,4 +360,5 @@ index c3d2998422..1b48c1b035 100644
    GstCompositorOperator op;
  
 -- 
-2.43.0
+2.34.1
+

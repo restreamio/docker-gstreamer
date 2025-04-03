@@ -1,7 +1,7 @@
 From e3ef323fda57a4b4e604820f8e183fea97892acd Mon Sep 17 00:00:00 2001
 From: Matthew Waters <matthew@centricular.com>
 Date: Tue, 29 Sep 2020 14:51:54 +1000
-Subject: [PATCH 1/4] baseparse: always update the input pts if available from
+Subject: [PATCH] baseparse: always update the input pts if available from
  upstream
 
 We were not which could lead to output buffers having a pts of NONE even
@@ -12,10 +12,10 @@ muxers would reject the buffer without a pts and fail.
  1 file changed, 3 insertions(+), 2 deletions(-)
 
 diff --git a/subprojects/gstreamer/libs/gst/base/gstbaseparse.c b/subprojects/gstreamer/libs/gst/base/gstbaseparse.c
-index 422e489c32..382f8a9757 100644
+index 660439bacfa..04d400604ca 100644
 --- a/subprojects/gstreamer/libs/gst/base/gstbaseparse.c
 +++ b/subprojects/gstreamer/libs/gst/base/gstbaseparse.c
-@@ -3284,9 +3284,10 @@ gst_base_parse_chain (GstPad * pad, GstObject * parent, GstBuffer * buffer)
+@@ -3281,9 +3281,10 @@ gst_base_parse_chain (GstPad * pad, GstObject * parent, GstBuffer * buffer)
       * but interpolate in between */
      pts = gst_adapter_prev_pts (parse->priv->adapter, NULL);
      dts = gst_adapter_prev_dts (parse->priv->adapter, NULL);
@@ -29,4 +29,5 @@ index 422e489c32..382f8a9757 100644
  
      if (GST_CLOCK_TIME_IS_VALID (dts) && (parse->priv->prev_dts != dts)) {
 -- 
-2.43.0
+GitLab
+
