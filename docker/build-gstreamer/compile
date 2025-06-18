@@ -29,6 +29,7 @@ git apply /compile-patch/0001-compositor-add-rounded-corners-property-for-sink-p
 git apply /compile-patch/0001-pad-Check-data-NULL-ness-when-probes-are-stopped-fixed-in-1.24.8.patch
 git apply /compile-patch/0001-Reduce-logs-verbosity-in-webrtcbin-when-a-FEC-decode.patch
 git apply /compile-patch/0001-glvideomixer-update-API-to-be-compatible-with-versio.patch
+git apply /compile-patch/0001-GstAudioAggregator-fix-structure-unref.patch
 
 # This is needed for other plugins to be built properly
 ninja -C build install
