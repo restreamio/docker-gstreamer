@@ -14,6 +14,8 @@ if [[ $ARCH == "amd64" ]]; then
     MESON_OPTIONS="$MESON_OPTIONS -Dgst-plugins-bad:msdk=enabled "
 fi
 
+git apply /compile-patch/0001-libnice.wrap-fix-incomplete-TCP-ICE-candidate-crash.patch
+
 if [[ $DEBUG == 'true' ]]; then
   if [[ $OPTIMIZATIONS == 'true' ]]; then
     meson build -D prefix=/usr $MESON_OPTIONS -D buildtype=debugoptimized
@@ -31,7 +33,6 @@ git apply /compile-patch/0001-pad-Check-data-NULL-ness-when-probes-are-stopped-f
 git apply /compile-patch/0001-Reduce-logs-verbosity-in-webrtcbin-when-a-FEC-decode.patch
 git apply /compile-patch/0001-glvideomixer-update-API-to-be-compatible-with-versio.patch
 git apply /compile-patch/0001-GstAudioAggregator-fix-structure-unref.patch
-git apply /compile-patch/0001-libnice.wrap-fix-incomplete-TCP-ICE-candidate-crash.patch
 
 # This is needed for other plugins to be built properly
 ninja -C build install
