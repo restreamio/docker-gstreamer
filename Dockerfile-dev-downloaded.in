@@ -3,7 +3,7 @@ FROM restreamio/gstreamer:$TARGET_ARCH-dev-dependencies
 ARG GSTREAMER_VERSION=1.22.12
 
 ARG GSTREAMER_CEF_REPOSITORY=https://github.com/centricular/gstcefsrc
-ARG GSTREAMER_CEF_CHECKOUT=cce144d984e70cc88f4624390419171fea6ca8ee
+ARG GSTREAMER_CEF_CHECKOUT=b63340852fc93b0ab67b07200e1ff44f59ba6769
 
 COPY docker/cef-config.sh /.cef-config.sh
 

@@ -131,7 +131,7 @@ apt-get install -y --no-install-recommends \
   glibc-tools \
   libqrencode-dev \
   libjson-glib-dev
-pip3 install meson ninja hotdoc
+pip3 install meson ninja
 
 ARCH=$(dpkg --print-architecture)
 if [[ $ARCH == "amd64" ]]; then

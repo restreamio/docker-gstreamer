@@ -43,21 +43,24 @@ popd
 
 # Build the GStreamer CEF plugin
 pushd gstcefsrc
-source /.cef-config.sh
-GST_CEF_CMAKE_OPTS="-DCMAKE_INSTALL_PREFIX=/usr/cef -GNinja -DCEF_BUILDS_HOMEPAGE_URL=$CEF_DOWNLOAD_URL -DCEF_VERSION=$CEF_VERSION"
-
-# TODO: Build CEF Debug artifacts as well.
-GST_CEF_BUILD_TYPE=Release
-
-cmake -DCMAKE_BUILD_TYPE=$GST_CEF_BUILD_TYPE $GST_CEF_CMAKE_OPTS -B build -S .
-
+git apply /compile-patch/0001-cefsrc-download-minimal-package.patch
 git apply /compile-patch/0001-cefsrc-unmultiply-alpha.patch
+
+source /.cef-config.sh
+cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/cef -GNinja -DCEF_VERSION=$CEF_VERSION -DCEF_MINIMAL_PACKAGE=ON
 
 DESTDIR=/compiled-binaries ninja -C build install
 rm -fr build third_party
 popd
 
-chown root:root /compiled-binaries/usr/cef/chrome-sandbox
-chmod 4755 /compiled-binaries/usr/cef/chrome-sandbox
+pushd /compiled-binaries/usr/cef
+strip -s ./*.so
+strip -s ./libvulkan.so.1
+strip -s ./gstcefsubprocess
+strip -s ./chrome-sandbox
+
+chown root:root ./chrome-sandbox
+chmod 4755 ./chrome-sandbox
+popd
 
 gst-inspect-1.0
