@@ -3,10 +3,12 @@ set -e
 
 source $HOME/.cargo/env
 
-# Build LD_PRELOAD shim that replaces glibc's deprecated mallinfo (which
-# SIGILLs once heap addresses exceed 2 GiB due to int overflow) with one that
-# returns a zeroed struct. Install both into the live filesystem and into
-# /compiled-binaries so it propagates to dev/prod images via COPY --from=0.
+# Build LD_PRELOAD shim that replaces glibc's deprecated mallinfo() with a
+# stub returning a zeroed struct. Works around a Chromium bug where
+# MemoryInfra crashes with SIGILL once heap addresses exceed 2 GiB, because
+# mallinfo()'s int fields overflow. Install both into the live filesystem and
+# into /compiled-binaries so it propagates to dev/prod images via COPY --from=0.
+# @see https://github.com/chromiumembedded/cef/issues/3963
 gcc -O2 -Wall -Wextra -fPIC -shared -o /usr/lib/libfakemallinfo.so /fake_mallinfo.c
 mkdir -p /compiled-binaries/usr/lib
 cp /usr/lib/libfakemallinfo.so /compiled-binaries/usr/lib/libfakemallinfo.so
