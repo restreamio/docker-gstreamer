@@ -64,6 +64,18 @@ Stable released have 2 tags:
 * regular like `1.18.1` that is a latest build of that upstream release
 * stable reference with one more number after regular `major.minor.patch` that starts with 0 and is incremented if there are multiple builds for the same upstream stable version (like `1.18.1.0`)
 
+## Chromium MemoryInfra SIGILL workaround
+
+glibc's deprecated `mallinfo()` returns `int` fields that overflow once heap addresses exceed 2 GiB. Chromium's MemoryInfra collector still calls it and crashes with SIGILL as soon as a long-running CEF process grows its heap past that threshold. See [chromiumembedded/cef#3963](https://github.com/chromiumembedded/cef/issues/3963).
+
+Image bundles `/usr/lib/libfakemallinfo.so`, a tiny shared library that overrides `mallinfo()` with a stub returning a zeroed `struct mallinfo`. Preload it via `LD_PRELOAD` when starting your binary. In a Dockerfile:
+
+```dockerfile
+ENV LD_PRELOAD=/usr/lib/libfakemallinfo.so
+```
+
+The shim is a no-op for callers that don't use `mallinfo()`, so it's safe to leave preloaded for the whole process tree.
+
 ## Contribution
 Feel free to create issues and send pull requests, they are highly appreciated!
 
