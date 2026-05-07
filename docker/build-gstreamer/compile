@@ -3,6 +3,14 @@ set -e
 
 source $HOME/.cargo/env
 
+# Build LD_PRELOAD shim that replaces glibc's deprecated mallinfo (which
+# SIGILLs once heap addresses exceed 2 GiB due to int overflow) with one that
+# returns a zeroed struct. Install both into the live filesystem and into
+# /compiled-binaries so it propagates to dev/prod images via COPY --from=0.
+gcc -O2 -Wall -Wextra -fPIC -shared -o /usr/lib/libfakemallinfo.so /fake_mallinfo.c
+mkdir -p /compiled-binaries/usr/lib
+cp /usr/lib/libfakemallinfo.so /compiled-binaries/usr/lib/libfakemallinfo.so
+
 pushd gstreamer
 # TODO: Hack: `-D gupnp=disabled` is for libnice, because libgupnp-igd causes memory leaks
 # msdk=enabled is for gst-plugings-bad to include msdk elements
