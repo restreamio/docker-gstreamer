@@ -14,7 +14,7 @@ docker_build() {
 }
 
 # Make sure to always have fresh base image
-docker pull ubuntu:22.04
+docker pull ubuntu:26.04
 # Install dev dependencies
 docker build -t $TAG_BASENAME-dev-dependencies -f Dockerfile-dev-dependencies .
 

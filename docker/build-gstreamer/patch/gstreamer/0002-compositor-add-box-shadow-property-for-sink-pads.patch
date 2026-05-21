@@ -1,15 +1,15 @@
-From 31cf4ec891f738fc895f561ed3c7073ee45d2478 Mon Sep 17 00:00:00 2001
+From 6a2de640c50b44cbf8eaeb4a123bec43cafe73db Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Lo=C3=AFc=20Le=20Page?= <llepage@igalia.com>
-Date: Wed, 24 Jul 2024 17:00:24 +0200
-Subject: [PATCH] compositor: add box-shadow property for sink pads
+Date: Fri, 22 May 2026 13:11:25 +0200
+Subject: [PATCH 2/2] compositor: add box-shadow property for sink pads
 
 ---
- .../gst/compositor/compositor.c               | 977 ++++++++++++++----
+ .../gst/compositor/compositor.c               | 891 +++++++++++++++---
  .../gst/compositor/compositor.h               |   1 +
- 2 files changed, 792 insertions(+), 186 deletions(-)
+ 2 files changed, 750 insertions(+), 142 deletions(-)
 
 diff --git a/subprojects/gst-plugins-base/gst/compositor/compositor.c b/subprojects/gst-plugins-base/gst/compositor/compositor.c
-index cc40e50add..c4f9615836 100644
+index 336acc44dd..dfa6f35f3f 100644
 --- a/subprojects/gst-plugins-base/gst/compositor/compositor.c
 +++ b/subprojects/gst-plugins-base/gst/compositor/compositor.c
 @@ -55,6 +55,16 @@
@@ -64,7 +64,7 @@ index cc40e50add..c4f9615836 100644
   */
  
  #ifdef HAVE_CONFIG_H
-@@ -232,14 +270,24 @@ enum
+@@ -232,8 +270,18 @@ enum
    PROP_PAD_OPERATOR,
    PROP_PAD_SIZING_POLICY,
    PROP_PAD_BORDER_RADIUS,
@@ -82,14 +82,6 @@ index cc40e50add..c4f9615836 100644
 +
  G_DEFINE_TYPE (GstCompositorPad, gst_compositor_pad,
      GST_TYPE_VIDEO_AGGREGATOR_PARALLEL_CONVERT_PAD);
- 
- static void
--gst_compositor_pad_get_property (GObject * object, guint prop_id,
--    GValue * value, GParamSpec * pspec)
-+gst_compositor_pad_get_property (GObject *object, guint prop_id,
-+    GValue *value, GParamSpec *pspec)
- {
-   GstCompositorPad *pad = GST_COMPOSITOR_PAD (object);
  
 @@ -285,6 +333,31 @@ gst_compositor_pad_get_property (GObject * object, guint prop_id,
        g_value_unset (&radius);
@@ -123,18 +115,7 @@ index cc40e50add..c4f9615836 100644
      default:
        G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
        break;
-@@ -292,8 +365,8 @@ gst_compositor_pad_get_property (GObject * object, guint prop_id,
- }
- 
- static void
--gst_compositor_pad_set_property (GObject * object, guint prop_id,
--    const GValue * value, GParamSpec * pspec)
-+gst_compositor_pad_set_property (GObject *object, guint prop_id,
-+    const GValue *value, GParamSpec *pspec)
- {
-   GstCompositorPad *pad = GST_COMPOSITOR_PAD (object);
- 
-@@ -379,6 +452,76 @@ gst_compositor_pad_set_property (GObject * object, guint prop_id,
+@@ -379,12 +452,99 @@ gst_compositor_pad_set_property (GObject * object, guint prop_id,
            pad->op == COMPOSITOR_OPERATOR_ADD
            || pad->border_radius.has_rounded_corners);
        break;
@@ -211,14 +192,11 @@ index cc40e50add..c4f9615836 100644
      default:
        G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
        break;
-@@ -386,9 +529,26 @@ gst_compositor_pad_set_property (GObject * object, guint prop_id,
+   }
  }
  
- static void
--_mixer_pad_get_output_size (GstCompositor * comp, GstCompositorPad * comp_pad,
--    gint out_par_n, gint out_par_d, gint * width, gint * height,
--    gint * x_offset, gint * y_offset)
-+gst_compositor_pad_dispose (GObject *object)
++static void
++gst_compositor_pad_dispose (GObject * object)
 +{
 +  GstCompositorPad *pad = GST_COMPOSITOR_PAD (object);
 +
@@ -234,13 +212,9 @@ index cc40e50add..c4f9615836 100644
 +  G_OBJECT_CLASS (gst_compositor_pad_parent_class)->dispose (object);
 +}
 +
-+static void
-+_mixer_pad_get_output_size (GstCompositor *comp, GstCompositorPad *comp_pad,
-+    gint out_par_n, gint out_par_d, gint *width, gint *height,
-+    gint *x_offset, gint *y_offset)
- {
-   GstVideoAggregatorPad *vagg_pad = GST_VIDEO_AGGREGATOR_PAD (comp_pad);
-   gint pad_width, pad_height;
+ static void
+ _mixer_pad_get_output_size (GstCompositor * comp, GstCompositorPad * comp_pad,
+     gint out_par_n, gint out_par_d, gint * width, gint * height,
 @@ -538,30 +698,70 @@ is_rectangle_contained (const GstVideoRectangle rect1,
    return FALSE;
  }
@@ -249,8 +223,8 @@ index cc40e50add..c4f9615836 100644
 -clamp_rectangle (gint x, gint y, gint w, gint h, gint outer_width,
 -    gint outer_height)
 +static void
-+extend_rectangle_with_box_shadows (GstVideoRectangle *rect,
-+    GstCompositorPad *pad)
++extend_rectangle_with_box_shadows (GstVideoRectangle * rect,
++    GstCompositorPad * pad)
  {
 -  gint x2 = x + w;
 -  gint y2 = y + h;
@@ -296,7 +270,7 @@ index cc40e50add..c4f9615836 100644
 +}
 +
 +static void
-+clamp_rectangle (GstVideoRectangle *rect, gint outer_width, gint outer_height)
++clamp_rectangle (GstVideoRectangle * rect, gint outer_width, gint outer_height)
 +{
 +  gint x2 = rect->x + rect->w;
 +  gint y2 = rect->y + rect->h;
@@ -321,8 +295,8 @@ index cc40e50add..c4f9615836 100644
  static gboolean
 -_pad_obscures_rectangle (GstVideoAggregator * vagg, GstVideoAggregatorPad * pad,
 -    const GstVideoRectangle rect)
-+_pad_image_fully_hide_underneath_rectangle (GstVideoAggregator *vagg,
-+    GstVideoAggregatorPad *pad, const GstVideoRectangle rect)
++_pad_image_fully_hide_underneath_rectangle (GstVideoAggregator * vagg,
++    GstVideoAggregatorPad * pad, const GstVideoRectangle rect)
  {
    GstVideoRectangle pad_rect;
    GstCompositorPad *cpad = GST_COMPOSITOR_PAD (pad);
@@ -376,17 +350,7 @@ index cc40e50add..c4f9615836 100644
  
    GST_DEBUG_OBJECT (pad, "Pad %s %ix%i@(%i,%i) obscures rect %ix%i@(%i,%i)",
        GST_PAD_NAME (pad), pad_rect.w, pad_rect.h, pad_rect.x, pad_rect.y,
-@@ -616,16 +855,16 @@ _pad_obscures_rectangle (GstVideoAggregator * vagg, GstVideoAggregatorPad * pad,
- }
- 
- static void
--gst_compositor_pad_prepare_frame_start (GstVideoAggregatorPad * pad,
--    GstVideoAggregator * vagg, GstBuffer * buffer,
--    GstVideoFrame * prepared_frame)
-+gst_compositor_pad_prepare_frame_start (GstVideoAggregatorPad *pad,
-+    GstVideoAggregator *vagg, GstBuffer *buffer, GstVideoFrame *prepared_frame)
- {
-   GstCompositorPad *cpad = GST_COMPOSITOR_PAD (pad);
+@@ -624,8 +863,9 @@ gst_compositor_pad_prepare_frame_start (GstVideoAggregatorPad * pad,
    gint width, height;
    gboolean frame_obscured = FALSE;
    GList *l;
@@ -398,7 +362,7 @@ index cc40e50add..c4f9615836 100644
    GstVideoRectangle frame_rect;
  
    /* There's three types of width/height here:
-@@ -652,9 +891,13 @@ gst_compositor_pad_prepare_frame_start (GstVideoAggregatorPad * pad,
+@@ -652,9 +892,13 @@ gst_compositor_pad_prepare_frame_start (GstVideoAggregatorPad * pad,
    if (gst_aggregator_pad_is_inactive (GST_AGGREGATOR_PAD (pad)))
      return;
  
@@ -415,7 +379,7 @@ index cc40e50add..c4f9615836 100644
  
    if (frame_rect.w == 0 || frame_rect.h == 0) {
      GST_DEBUG_OBJECT (pad, "Resulting frame is zero-width or zero-height "
-@@ -685,7 +928,7 @@ gst_compositor_pad_prepare_frame_start (GstVideoAggregatorPad * pad,
+@@ -685,7 +929,7 @@ gst_compositor_pad_prepare_frame_start (GstVideoAggregatorPad * pad,
        continue;
      }
  
@@ -424,27 +388,7 @@ index cc40e50add..c4f9615836 100644
        frame_obscured = TRUE;
        break;
      }
-@@ -701,8 +944,8 @@ gst_compositor_pad_prepare_frame_start (GstVideoAggregatorPad * pad,
- }
- 
- static void
--gst_compositor_pad_create_conversion_info (GstVideoAggregatorConvertPad * pad,
--    GstVideoAggregator * vagg, GstVideoInfo * conversion_info)
-+gst_compositor_pad_create_conversion_info (GstVideoAggregatorConvertPad *pad,
-+    GstVideoAggregator *vagg, GstVideoInfo *conversion_info)
- {
-   GstCompositor *self = GST_COMPOSITOR (vagg);
-   GstCompositorPad *cpad = GST_COMPOSITOR_PAD (pad);
-@@ -763,7 +1006,7 @@ gst_compositor_pad_create_conversion_info (GstVideoAggregatorConvertPad * pad,
- }
- 
- static void
--gst_compositor_pad_class_init (GstCompositorPadClass * klass)
-+gst_compositor_pad_class_init (GstCompositorPadClass *klass)
- {
-   GObjectClass *gobject_class = (GObjectClass *) klass;
-   GstVideoAggregatorPadClass *vaggpadclass =
-@@ -773,6 +1016,7 @@ gst_compositor_pad_class_init (GstCompositorPadClass * klass)
+@@ -773,6 +1017,7 @@ gst_compositor_pad_class_init (GstCompositorPadClass * klass)
  
    gobject_class->set_property = gst_compositor_pad_set_property;
    gobject_class->get_property = gst_compositor_pad_get_property;
@@ -452,7 +396,7 @@ index cc40e50add..c4f9615836 100644
  
    g_object_class_install_property (gobject_class, PROP_PAD_XPOS,
        g_param_spec_int ("xpos", "X Position", "X Position of the picture",
-@@ -844,6 +1088,33 @@ gst_compositor_pad_class_init (GstCompositorPadClass * klass)
+@@ -844,6 +1089,33 @@ gst_compositor_pad_class_init (GstCompositorPadClass * klass)
                G_PARAM_STATIC_STRINGS),
            G_PARAM_READWRITE | GST_PARAM_CONTROLLABLE | G_PARAM_STATIC_STRINGS));
  
@@ -486,130 +430,7 @@ index cc40e50add..c4f9615836 100644
    vaggpadclass->prepare_frame_start =
        GST_DEBUG_FUNCPTR (gst_compositor_pad_prepare_frame_start);
  
-@@ -854,7 +1125,7 @@ gst_compositor_pad_class_init (GstCompositorPadClass * klass)
- }
- 
- static void
--gst_compositor_pad_init (GstCompositorPad * compo_pad)
-+gst_compositor_pad_init (GstCompositorPad *compo_pad)
- {
-   compo_pad->xpos = DEFAULT_PAD_XPOS;
-   compo_pad->ypos = DEFAULT_PAD_YPOS;
-@@ -891,8 +1162,8 @@ enum
- };
- 
- static void
--gst_compositor_get_property (GObject * object,
--    guint prop_id, GValue * value, GParamSpec * pspec)
-+gst_compositor_get_property (GObject *object,
-+    guint prop_id, GValue *value, GParamSpec *pspec)
- {
-   GstCompositor *self = GST_COMPOSITOR (object);
- 
-@@ -917,8 +1188,8 @@ gst_compositor_get_property (GObject * object,
- }
- 
- static void
--gst_compositor_set_property (GObject * object,
--    guint prop_id, const GValue * value, GParamSpec * pspec)
-+gst_compositor_set_property (GObject *object,
-+    guint prop_id, const GValue *value, GParamSpec *pspec)
- {
-   GstCompositor *self = GST_COMPOSITOR (object);
- 
-@@ -950,7 +1221,7 @@ GST_ELEMENT_REGISTER_DEFINE (compositor, "compositor", GST_RANK_PRIMARY + 1,
-     GST_TYPE_COMPOSITOR);
- 
- static gboolean
--set_functions (GstCompositor * self, const GstVideoInfo * info)
-+set_functions (GstCompositor *self, const GstVideoInfo *info)
- {
-   gint offset[GST_VIDEO_MAX_COMPONENTS] = { 0, };
-   gint scale[GST_VIDEO_MAX_COMPONENTS] = { 0, };
-@@ -1295,7 +1566,7 @@ set_functions (GstCompositor * self, const GstVideoInfo * info)
- }
- 
- static GstCaps *
--_fixate_caps (GstAggregator * agg, GstCaps * caps)
-+_fixate_caps (GstAggregator *agg, GstCaps *caps)
- {
-   GstVideoAggregator *vagg = GST_VIDEO_AGGREGATOR (agg);
-   GList *l;
-@@ -1395,7 +1666,7 @@ gst_parallelized_task_thread_func (gpointer data)
- }
- 
- static void
--gst_parallelized_task_runner_join (GstParallelizedTaskRunner * self)
-+gst_parallelized_task_runner_join (GstParallelizedTaskRunner *self)
- {
-   gboolean joined = FALSE;
- 
-@@ -1412,7 +1683,7 @@ gst_parallelized_task_runner_join (GstParallelizedTaskRunner * self)
- }
- 
- static void
--gst_parallelized_task_runner_free (GstParallelizedTaskRunner * self)
-+gst_parallelized_task_runner_free (GstParallelizedTaskRunner *self)
- {
-   gst_parallelized_task_runner_join (self);
- 
-@@ -1425,7 +1696,7 @@ gst_parallelized_task_runner_free (GstParallelizedTaskRunner * self)
- }
- 
- static GstParallelizedTaskRunner *
--gst_parallelized_task_runner_new (guint n_threads, GstTaskPool * pool,
-+gst_parallelized_task_runner_new (guint n_threads, GstTaskPool *pool,
-     gboolean async_tasks)
- {
-   GstParallelizedTaskRunner *self;
-@@ -1469,7 +1740,7 @@ gst_parallelized_task_runner_new (guint n_threads, GstTaskPool * pool,
- }
- 
- static void
--gst_parallelized_task_runner_finish (GstParallelizedTaskRunner * self)
-+gst_parallelized_task_runner_finish (GstParallelizedTaskRunner *self)
- {
-   g_return_if_fail (self->func != NULL);
- 
-@@ -1480,8 +1751,8 @@ gst_parallelized_task_runner_finish (GstParallelizedTaskRunner * self)
- }
- 
- static void
--gst_parallelized_task_runner_run (GstParallelizedTaskRunner * self,
--    GstParallelizedTaskFunc func, gpointer * task_data)
-+gst_parallelized_task_runner_run (GstParallelizedTaskRunner *self,
-+    GstParallelizedTaskFunc func, gpointer *task_data)
- {
-   guint n_threads = self->n_threads;
- 
-@@ -1521,7 +1792,7 @@ gst_parallelized_task_runner_run (GstParallelizedTaskRunner * self,
- }
- 
- static gboolean
--_negotiated_caps (GstAggregator * agg, GstCaps * caps)
-+_negotiated_caps (GstAggregator *agg, GstCaps *caps)
- {
-   GstCompositor *compositor = GST_COMPOSITOR (agg);
-   GstVideoAggregator *vagg = GST_VIDEO_AGGREGATOR (agg);
-@@ -1620,7 +1891,7 @@ _negotiated_caps (GstAggregator * agg, GstCaps * caps)
- }
- 
- static gboolean
--gst_composior_stop (GstAggregator * agg)
-+gst_composior_stop (GstAggregator *agg)
- {
-   GstCompositor *self = GST_COMPOSITOR (agg);
- 
-@@ -1631,7 +1902,7 @@ gst_composior_stop (GstAggregator * agg)
- }
- 
- static gboolean
--_should_draw_background (GstVideoAggregator * vagg)
-+_should_draw_background (GstVideoAggregator *vagg)
- {
-   GstVideoRectangle bg_rect;
-   gboolean draw = TRUE;
-@@ -1651,7 +1922,7 @@ _should_draw_background (GstVideoAggregator * vagg)
+@@ -1651,7 +1923,7 @@ _should_draw_background (GstVideoAggregator * vagg)
              (l->data)) == NULL)
        continue;
  
@@ -618,16 +439,7 @@ index cc40e50add..c4f9615836 100644
        draw = FALSE;
        break;
      }
-@@ -1661,7 +1932,7 @@ _should_draw_background (GstVideoAggregator * vagg)
- }
- 
- static gboolean
--frames_can_copy (const GstVideoFrame * frame1, const GstVideoFrame * frame2)
-+frames_can_copy (const GstVideoFrame *frame1, const GstVideoFrame *frame2)
- {
-   if (GST_VIDEO_FRAME_FORMAT (frame1) != GST_VIDEO_FRAME_FORMAT (frame2))
-     return FALSE;
-@@ -1672,14 +1943,157 @@ frames_can_copy (const GstVideoFrame * frame1, const GstVideoFrame * frame2)
+@@ -1672,14 +1944,157 @@ frames_can_copy (const GstVideoFrame * frame1, const GstVideoFrame * frame2)
    return TRUE;
  }
  
@@ -655,7 +467,7 @@ index cc40e50add..c4f9615836 100644
 +} CompositePadInfo;
 +
 +static gboolean
-+extract_composite_pad_info (GstCompositorPad *pad, CompositePadInfo *info)
++extract_composite_pad_info (GstCompositorPad * pad, CompositePadInfo * info)
 +{
 +  GstVideoFrame *prepared_frame =
 +      gst_video_aggregator_pad_get_prepared_frame (GST_VIDEO_AGGREGATOR_PAD
@@ -788,7 +600,7 @@ index cc40e50add..c4f9615836 100644
  {
    GstCompositor *compositor;
    GstVideoFrame *out_frame;
-@@ -1687,12 +2101,12 @@ struct CompositeTask
+@@ -1687,8 +2102,8 @@ struct CompositeTask
    guint dst_line_end;
    gboolean draw_background;
    guint n_pads;
@@ -798,20 +610,14 @@ index cc40e50add..c4f9615836 100644
 +} CompositeTask;
  
  static void
--_draw_background (GstCompositor * comp, GstVideoFrame * outframe,
--    guint y_start, guint y_end, BlendFunction * composite)
-+_draw_background (GstCompositor *comp, GstVideoFrame *outframe,
-+    guint y_start, guint y_end, BlendFunction *composite)
- {
-   *composite = comp->blend;
- 
-@@ -1750,96 +2164,83 @@ _draw_background (GstCompositor * comp, GstVideoFrame * outframe,
+ _draw_background (GstCompositor * comp, GstVideoFrame * outframe,
+@@ -1750,96 +2165,83 @@ _draw_background (GstCompositor * comp, GstVideoFrame * outframe,
  }
  
  static void
 -blend_pads (struct CompositeTask *comp)
-+cut_off_rounded_corners (const GstVideoRectangle *visible_rect,
-+    const guint *border_radius, GstVideoFrame *frame)
++cut_off_rounded_corners (const GstVideoRectangle * visible_rect,
++    const guint * border_radius, GstVideoFrame * frame)
  {
 -  BlendFunction composite;
 -  guint i;
@@ -958,7 +764,7 @@ index cc40e50add..c4f9615836 100644
                *(guint16 *) component *= coeff;
              } else {
                *component *= coeff;
-@@ -1851,15 +2252,236 @@ cut_off_rounded_corners (GstCompositorPad * pad, GstVideoFrame * frame)
+@@ -1851,6 +2253,228 @@ cut_off_rounded_corners (GstCompositorPad * pad, GstVideoFrame * frame)
    }
  }
  
@@ -1001,7 +807,8 @@ index cc40e50add..c4f9615836 100644
 +
 +static float
 +compute_box_shadow_alpha_coeff (guint x, guint y,
-+    const BoxShadowFrame *shadow, float blur_coeff, const guint *border_radius)
++    const BoxShadowFrame * shadow, float blur_coeff,
++    const guint * border_radius)
 +{
 +  float alpha_coeff = 1.f;
 +  guint blur_extent = shadow->shadow.blur << 1;
@@ -1070,8 +877,8 @@ index cc40e50add..c4f9615836 100644
 +}
 +
 +static void
-+fill_shadow_frame (const GstVideoRectangle *visible_rect,
-+    const BoxShadowFrame *shadow, const CompositePadInfo *info)
++fill_shadow_frame (const GstVideoRectangle * visible_rect,
++    const BoxShadowFrame * shadow, const CompositePadInfo * info)
 +{
 +  g_assert (visible_rect->x >= 0);
 +  g_assert (visible_rect->y >= 0);
@@ -1120,8 +927,8 @@ index cc40e50add..c4f9615836 100644
 +}
 +
 +static gboolean
-+has_visible_src_rect (GstVideoRectangle *visible_src_rect_out,
-+    const GstVideoRectangle *dest_rect, const CompositeTask *task)
++has_visible_src_rect (GstVideoRectangle * visible_src_rect_out,
++    const GstVideoRectangle * dest_rect, const CompositeTask * task)
 +{
 +  visible_src_rect_out->x = MAX (0, -dest_rect->x);
 +  visible_src_rect_out->y = MAX (0, (gint) task->dst_line_start - dest_rect->y);
@@ -1137,7 +944,7 @@ index cc40e50add..c4f9615836 100644
 +}
 +
 +static void
-+blend_pads (CompositeTask *comp)
++blend_pads (CompositeTask * comp)
 +{
 +  BlendFunction composite = comp->compositor->blend;
 +
@@ -1183,12 +990,10 @@ index cc40e50add..c4f9615836 100644
 +  }
 +}
 +
- static GstFlowReturn
--gst_compositor_aggregate_frames (GstVideoAggregator * vagg, GstBuffer * outbuf)
-+gst_compositor_aggregate_frames (GstVideoAggregator *vagg, GstBuffer *outbuf)
- {
-   GstCompositor *compositor = GST_COMPOSITOR (vagg);
-   GList *l;
+ static void
+ copy_metas (GstCompositor * compositor, GstCompositorPad * cpad,
+     GstVideoFrame * in_frame, GstBuffer * out_buffer)
+@@ -1898,7 +2522,7 @@ gst_compositor_aggregate_frames (GstVideoAggregator * vagg, GstBuffer * outbuf)
    GstVideoFrame out_frame, intermediate_frame, *outframe;
    gboolean draw_background;
    guint drawn_a_pad = FALSE;
@@ -1196,8 +1001,8 @@ index cc40e50add..c4f9615836 100644
 +  CompositePadInfo *pads_info;
    guint i, n_pads = 0;
  
-   if (!gst_video_frame_map (&out_frame, &vagg->info, outbuf, GST_MAP_WRITE)) {
-@@ -1902,52 +2524,25 @@ gst_compositor_aggregate_frames (GstVideoAggregator * vagg, GstBuffer * outbuf)
+   if (!gst_video_frame_map (&out_frame, &vagg->info, outbuf,
+@@ -1942,53 +2566,26 @@ gst_compositor_aggregate_frames (GstVideoAggregator * vagg, GstBuffer * outbuf)
    if (n_pads == 0)
      draw_background = TRUE;
  
@@ -1242,10 +1047,12 @@ index cc40e50add..c4f9615836 100644
        if (!drawn_a_pad && !draw_background &&
 -          frames_can_copy (prepared_frame, outframe)) {
 -        gst_video_frame_copy (outframe, prepared_frame);
+-        copy_metas (compositor, compo_pad, prepared_frame, outbuf);
 +          !compo_info->has_rounded_corners &&
 +          !compo_info->box_shadows &&
 +          frames_can_copy (compo_info->prepared_frame, outframe)) {
 +        gst_video_frame_copy (outframe, compo_info->prepared_frame);
++        copy_metas (compositor, compo_pad, compo_info->prepared_frame, outbuf);
        } else {
 -        if (compo_pad->border_radius.has_rounded_corners
 -            && GST_VIDEO_INFO_HAS_ALPHA (&prepared_frame->info)) {
@@ -1262,7 +1069,7 @@ index cc40e50add..c4f9615836 100644
          n_pads++;
        }
        drawn_a_pad = TRUE;
-@@ -1957,13 +2552,13 @@ gst_compositor_aggregate_frames (GstVideoAggregator * vagg, GstBuffer * outbuf)
+@@ -1998,13 +2595,13 @@ gst_compositor_aggregate_frames (GstVideoAggregator * vagg, GstBuffer * outbuf)
    {
      guint n_threads, lines_per_thread;
      guint out_height;
@@ -1280,11 +1087,11 @@ index cc40e50add..c4f9615836 100644
  
      out_height = GST_VIDEO_FRAME_HEIGHT (outframe);
      lines_per_thread = (out_height + n_threads - 1) / n_threads;
-@@ -1988,6 +2583,16 @@ gst_compositor_aggregate_frames (GstVideoAggregator * vagg, GstBuffer * outbuf)
+@@ -2029,6 +2626,15 @@ gst_compositor_aggregate_frames (GstVideoAggregator * vagg, GstBuffer * outbuf)
          (GstParallelizedTaskFunc) blend_pads, (gpointer *) tasks_p);
    }
  
-+  for (guint i = 0; i < n_pads; ++i) {
++  for (i = 0; i < n_pads; ++i) {
 +    CompositePadInfo *pad_info = pads_info + i;
 +
 +    for (guint j = 0; j < pad_info->box_shadows_len; ++j) {
@@ -1292,114 +1099,20 @@ index cc40e50add..c4f9615836 100644
 +    }
 +    g_free (pad_info->box_shadows);
 +  }
-+  g_free (pads_info);
 +
    GST_OBJECT_UNLOCK (vagg);
  
    if (compositor->intermediate_frame) {
-@@ -2003,8 +2608,8 @@ gst_compositor_aggregate_frames (GstVideoAggregator * vagg, GstBuffer * outbuf)
+@@ -2046,6 +2652,7 @@ gst_compositor_aggregate_frames (GstVideoAggregator * vagg, GstBuffer * outbuf)
+         outbuf);
+   }
+   GST_OBJECT_UNLOCK (vagg);
++  g_free (pads_info);
+ 
+   return GST_FLOW_OK;
  }
- 
- static GstPad *
--gst_compositor_request_new_pad (GstElement * element, GstPadTemplate * templ,
--    const gchar * req_name, const GstCaps * caps)
-+gst_compositor_request_new_pad (GstElement *element, GstPadTemplate *templ,
-+    const gchar *req_name, const GstCaps *caps)
- {
-   GstPad *newpad;
- 
-@@ -2028,7 +2633,7 @@ could_not_create:
- }
- 
- static void
--gst_compositor_release_pad (GstElement * element, GstPad * pad)
-+gst_compositor_release_pad (GstElement *element, GstPad *pad)
- {
-   GstCompositor *compositor;
- 
-@@ -2043,7 +2648,7 @@ gst_compositor_release_pad (GstElement * element, GstPad * pad)
- }
- 
- static gboolean
--src_pad_mouse_event (GstElement * element, GstPad * pad, gpointer user_data)
-+src_pad_mouse_event (GstElement *element, GstPad *pad, gpointer user_data)
- {
-   GstVideoAggregator *vagg = GST_VIDEO_AGGREGATOR_CAST (element);
-   GstCompositor *comp = GST_COMPOSITOR (element);
-@@ -2086,7 +2691,7 @@ src_pad_mouse_event (GstElement * element, GstPad * pad, gpointer user_data)
- }
- 
- static gboolean
--_src_event (GstAggregator * agg, GstEvent * event)
-+_src_event (GstAggregator *agg, GstEvent *event)
- {
-   GstNavigationEventType event_type;
- 
-@@ -2116,7 +2721,7 @@ _src_event (GstAggregator * agg, GstEvent * event)
- }
- 
- static gboolean
--_sink_query (GstAggregator * agg, GstAggregatorPad * bpad, GstQuery * query)
-+_sink_query (GstAggregator *agg, GstAggregatorPad *bpad, GstQuery *query)
- {
-   switch (GST_QUERY_TYPE (query)) {
-     case GST_QUERY_ALLOCATION:{
-@@ -2158,7 +2763,7 @@ _sink_query (GstAggregator * agg, GstAggregatorPad * bpad, GstQuery * query)
- }
- 
- static void
--gst_compositor_finalize (GObject * object)
-+gst_compositor_finalize (GObject *object)
- {
-   GstCompositor *compositor = GST_COMPOSITOR (object);
- 
-@@ -2171,7 +2776,7 @@ gst_compositor_finalize (GObject * object)
- 
- /* GObject boilerplate */
- static void
--gst_compositor_class_init (GstCompositorClass * klass)
-+gst_compositor_class_init (GstCompositorClass *klass)
- {
-   GObjectClass *gobject_class = (GObjectClass *) klass;
-   GstElementClass *gstelement_class = (GstElementClass *) klass;
-@@ -2265,7 +2870,7 @@ gst_compositor_class_init (GstCompositorClass * klass)
- }
- 
- static void
--gst_compositor_init (GstCompositor * self)
-+gst_compositor_init (GstCompositor *self)
- {
-   /* initialize variables */
-   self->background = DEFAULT_BACKGROUND;
-@@ -2275,7 +2880,7 @@ gst_compositor_init (GstCompositor * self)
- 
- /* GstChildProxy implementation */
- static GObject *
--gst_compositor_child_proxy_get_child_by_index (GstChildProxy * child_proxy,
-+gst_compositor_child_proxy_get_child_by_index (GstChildProxy *child_proxy,
-     guint index)
- {
-   GstCompositor *compositor = GST_COMPOSITOR (child_proxy);
-@@ -2291,7 +2896,7 @@ gst_compositor_child_proxy_get_child_by_index (GstChildProxy * child_proxy,
- }
- 
- static guint
--gst_compositor_child_proxy_get_children_count (GstChildProxy * child_proxy)
-+gst_compositor_child_proxy_get_children_count (GstChildProxy *child_proxy)
- {
-   guint count = 0;
-   GstCompositor *compositor = GST_COMPOSITOR (child_proxy);
-@@ -2315,7 +2920,7 @@ gst_compositor_child_proxy_init (gpointer g_iface, gpointer iface_data)
- 
- /* Element registration */
- static gboolean
--plugin_init (GstPlugin * plugin)
-+plugin_init (GstPlugin *plugin)
- {
-   GST_DEBUG_CATEGORY_INIT (gst_compositor_debug, "compositor", 0, "compositor");
- 
 diff --git a/subprojects/gst-plugins-base/gst/compositor/compositor.h b/subprojects/gst-plugins-base/gst/compositor/compositor.h
-index 1b48c1b035..72185e5a4c 100644
+index 274c1e9b4a..d02da25afd 100644
 --- a/subprojects/gst-plugins-base/gst/compositor/compositor.h
 +++ b/subprojects/gst-plugins-base/gst/compositor/compositor.h
 @@ -177,6 +177,7 @@ struct _GstCompositorPad

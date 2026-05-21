@@ -1,7 +1,7 @@
-From dd260de0def61760196b76cf33a7bda62280db40 Mon Sep 17 00:00:00 2001
+From 5b2e46069f763665e67e44dd38f5e415fd7da7ea Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Lo=C3=AFc=20Le=20Page?= <llepage@igalia.com>
-Date: Thu, 18 Jul 2024 18:34:55 +0200
-Subject: [PATCH] compositor: add rounded corners property for sink pads
+Date: Fri, 22 May 2026 11:22:04 +0200
+Subject: [PATCH 1/2] compositor: add rounded corners property for sink pads
 
 ---
  .../gst/compositor/compositor.c               | 239 +++++++++++++++++-
@@ -9,7 +9,7 @@ Subject: [PATCH] compositor: add rounded corners property for sink pads
  2 files changed, 240 insertions(+), 6 deletions(-)
 
 diff --git a/subprojects/gst-plugins-base/gst/compositor/compositor.c b/subprojects/gst-plugins-base/gst/compositor/compositor.c
-index 54a2e9dc58..cc40e50add 100644
+index 7e07f2c3ea..336acc44dd 100644
 --- a/subprojects/gst-plugins-base/gst/compositor/compositor.c
 +++ b/subprojects/gst-plugins-base/gst/compositor/compositor.c
 @@ -41,6 +41,20 @@
@@ -322,12 +322,12 @@ index 54a2e9dc58..cc40e50add 100644
 +  }
 +}
 +
- static GstFlowReturn
- gst_compositor_aggregate_frames (GstVideoAggregator * vagg, GstBuffer * outbuf)
- {
-@@ -1718,6 +1936,15 @@ gst_compositor_aggregate_frames (GstVideoAggregator * vagg, GstBuffer * outbuf)
-           frames_can_copy (prepared_frame, outframe)) {
+ static void
+ copy_metas (GstCompositor * compositor, GstCompositorPad * cpad,
+     GstVideoFrame * in_frame, GstBuffer * out_buffer)
+@@ -1759,6 +1977,15 @@ gst_compositor_aggregate_frames (GstVideoAggregator * vagg, GstBuffer * outbuf)
          gst_video_frame_copy (outframe, prepared_frame);
+         copy_metas (compositor, compo_pad, prepared_frame, outbuf);
        } else {
 +        if (compo_pad->border_radius.has_rounded_corners
 +            && GST_VIDEO_INFO_HAS_ALPHA (&prepared_frame->info)) {
@@ -342,7 +342,7 @@ index 54a2e9dc58..cc40e50add 100644
          pads_info[n_pads].prepared_frame = prepared_frame;
          pads_info[n_pads].blend_mode = blend_mode;
 diff --git a/subprojects/gst-plugins-base/gst/compositor/compositor.h b/subprojects/gst-plugins-base/gst/compositor/compositor.h
-index c3d2998422..1b48c1b035 100644
+index 2d4c06c171..274c1e9b4a 100644
 --- a/subprojects/gst-plugins-base/gst/compositor/compositor.h
 +++ b/subprojects/gst-plugins-base/gst/compositor/compositor.h
 @@ -170,6 +170,13 @@ struct _GstCompositorPad
@@ -360,5 +360,5 @@ index c3d2998422..1b48c1b035 100644
    GstCompositorOperator op;
  
 -- 
-2.34.1
+2.43.0
 

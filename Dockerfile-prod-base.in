@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM ubuntu:26.04
 
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -7,18 +7,18 @@ RUN \
     apt-get dist-upgrade -y && \
     apt-get install -y --no-install-recommends \
         ca-certificates \
-        libatk1.0-0 \
-        libatk-bridge2.0-0 \
+        libatk1.0-0t64 \
+        libatk-bridge2.0-0t64 \
         libatk-adaptor \
-        libatspi2.0-0 \
+        libatspi2.0-0t64 \
         libunwind8 \
-        libdw1 \
+        libdw1t64 \
         libgmp10 \
-        libgsl27 \
-        libglib2.0-0 \
+        libgsl28 \
+        libglib2.0-0t64 \
         libcap2 \
-        libcups2 \
-        liborc-0.4-0 \
+        libcups2t64 \
+        liborc-0.4-0t64 \
         iso-codes \
         libgl1 \
         libgles1 \
@@ -26,13 +26,13 @@ RUN \
         libgudev-1.0-0 \
         libgbm1 \
         libgraphene-1.0-dev \
-        libpng16-16 \
+        libpng16-16t64 \
         libjpeg8 \
         libogg0 \
         libopus0 \
         libpango-1.0-0 \
         libvisual-0.4-0 \
-        libtheora0 \
+        libtheora1 \
         libvorbis0a \
         libxkbcommon0 \
         libxcomposite1 \
@@ -54,20 +54,20 @@ RUN \
         bubblewrap \
         libseccomp2 \
         xdg-dbus-proxy \
-        libsoup2.4-1 \
+        libsoup-3.0-0 \
         libvulkan1 \
         libass9 \
         libchromaprint1 \
-        libcurl3-gnutls \
+        libcurl3t64-gnutls \
         libaom3 \
         libbz2-1.0 \
         liblcms2-2 \
         libbs2b0 \
         libdca0 \
-        libfaac0 \
+        libfaac0t64 \
         libfaad2 \
         libflite1 \
-        libssl3 \
+        libssl3t64 \
         ladspa-sdk \
         libfdk-aac2 \
         libgsm1 \
@@ -77,48 +77,49 @@ RUN \
         liblilv-0-0 \
         libmodplug1 \
         mjpegtools \
-        libmjpegutils-2.1-0 \
+        libmjpegutils-2.2-0 \
         libmpcdec6 \
         libdvdnav4 \
-        libdvdread8 \
+        libdvdread8t64 \
         librsvg2-2 \
         librtmp1 \
         libsbc1 \
         libsndfile1 \
         libsoundtouch1 \
-        libspandsp2 \
-        libsrt1.4-openssl \
+        libspandsp2t64 \
+        libsrt1.5-openssl \
         libsrtp2-1 \
         libvo-aacenc0 \
         libvo-amrwbenc0 \
-        libwebrtc-audio-processing1 \
+        libwebrtc-audio-processing-1-3 \
+        libwebrtc-audio-coding-1-3 \
         libofa0 \
-        libzvbi0 \
-        libopenexr25 \
+        libzvbi0t64 \
+        libopenexr-3-1-30 \
         libwildmidi2 \
-        libx265-199 \
-        libzbar0 \
+        libx265-215 \
+        libzbar0t64 \
         wayland-protocols \
         libaa1 \
         libmp3lame0 \
         libcaca0 \
-        libdv4 \
-        libmpg123-0 \
-        libvpx7 \
+        libdv4t64 \
+        libmpg123-0t64 \
+        libvpx12 \
         libshout3 \
         libspeex1 \
-        libtag1v5 \
+        libtag2 \
         libtwolame0 \
         libwavpack1 \
         liba52-0.7.4 \
-        libx264-163 \
+        libx264-165 \
         libopencore-amrnb0 \
         libopencore-amrwb0 \
         libmpeg2-4 \
-        libavcodec58 \
-        libavfilter7 \
-        libavformat58 \
-        libavutil56 \
+        libavcodec62 \
+        libavfilter11 \
+        libavformat62 \
+        libavutil60 \
         libva2 \
         libva-wayland2 \
         xvfb \
