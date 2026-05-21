@@ -1,13 +1,6 @@
 #!/bin/bash
 set -e
 
-if [[ $WEBKIT_USE_SCCACHE == '1' ]]; then
-    sed 's;@@SCCACHE_SCHEDULER@@;'"${SCCACHE_SCHEDULER}"';g' sccache.toml > docker/sccache.toml
-    sed -i 's;@@SCCACHE_AUTH_TOKEN@@;'"${SCCACHE_AUTH_TOKEN}"';g' docker/sccache.toml
-else
-    echo > docker/sccache.toml
-fi
-
 ARCH=$(uname -m)
 
 TAG_BASENAME="restreamio/gstreamer:$ARCH"

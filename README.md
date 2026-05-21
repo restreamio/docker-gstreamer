@@ -12,7 +12,6 @@ Following components are present:
 * gst-libav
 * gstreamer-vaapi
 * libnice (newer version from git)
-* WPE WebKit (newer version from upstream release)
 * gstcefsrc
 
 GStreamer and components are tracking upstream master branches (with minor fixes on top) and are usually updated a few times a month.
@@ -25,24 +24,6 @@ NOTE:
 * 2020-12-30T23-16-11Z images and older were based on Ubuntu 20.04
 * 1.18.4.0 images and older were based on Ubuntu 20.10 
 * 2021-06-08T14-12-58Z images and older were based on Ubuntu 20.10
-
-## SCCache support
-
-The sysroot includes WPEWebKit, which is a huge project and requires a good
-build machine. However in case you have access to a
-[SCCache](https://github.com/mozilla/sccache) scheduler online, you can use it
-to build WPEWebKit:
-
-```bash
-export SCCACHE_SCHEDULER=https://sccache.corp.com
-export SCCACHE_AUTH_TOKEN=s3cr3t
-export WEBKIT_USE_SCCACHE=1
-./build-latest.sh
-```
-
-The configuration template stored in `sccache.toml` is filled with the scheduler
-address and authentication token supplied through the corresponding environment
-variables.
 
 # Builds on Docker Hub
 Builds use Restream-specific patches by default, but there are also vanilla upstream builds available.

@@ -7,8 +7,6 @@ ARG GSTREAMER_CEF_CHECKOUT=b63340852fc93b0ab67b07200e1ff44f59ba6769
 
 COPY docker/cef-config.sh /.cef-config.sh
 
-COPY docker/sccache.toml /sccache.toml
-
 COPY docker/build-gstreamer/download /download
 
 RUN ["/download"]
