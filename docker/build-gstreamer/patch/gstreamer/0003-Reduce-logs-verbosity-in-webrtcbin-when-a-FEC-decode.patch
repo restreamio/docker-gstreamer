@@ -9,10 +9,10 @@ Subject: [PATCH] Reduce logs verbosity in webrtcbin when a FEC decoder cannot
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/subprojects/gst-plugins-bad/ext/webrtc/gstwebrtcbin.c b/subprojects/gst-plugins-bad/ext/webrtc/gstwebrtcbin.c
-index 0e315ac466..3acae76b6f 100644
+index a2bac2dc1b..87072805f4 100644
 --- a/subprojects/gst-plugins-bad/ext/webrtc/gstwebrtcbin.c
 +++ b/subprojects/gst-plugins-bad/ext/webrtc/gstwebrtcbin.c
-@@ -5013,7 +5013,7 @@ try_match_transceiver_with_fec_decoder (GstWebRTCBin * webrtc,
+@@ -5110,7 +5110,7 @@ try_match_transceiver_with_fec_decoder (GstWebRTCBin * webrtc,
        if (original_pt == item->pt && item->media_idx != -1
            && item->media_idx == trans->parent.mline) {
          if (trans->ulpfecdec) {
@@ -21,7 +21,7 @@ index 0e315ac466..3acae76b6f 100644
            gst_clear_object (&trans->ulpfecdec);
          }
          trans->ulpfecdec = gst_object_ref (fecdec);
-@@ -5023,7 +5023,7 @@ try_match_transceiver_with_fec_decoder (GstWebRTCBin * webrtc,
+@@ -5120,7 +5120,7 @@ try_match_transceiver_with_fec_decoder (GstWebRTCBin * webrtc,
      }
  
      if (!found_transceiver) {
@@ -32,4 +32,3 @@ index 0e315ac466..3acae76b6f 100644
    }
 -- 
 2.43.0
-

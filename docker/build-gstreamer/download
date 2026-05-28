@@ -3,7 +3,8 @@ set -e
 
 git clone -b "$GSTREAMER_VERSION" https://gitlab.freedesktop.org/gstreamer/gstreamer.git
 
-git clone --no-checkout "$GSTREAMER_CEF_REPOSITORY"
+source /.cef-config.sh
+git clone --no-checkout "$CEF_REPOSITORY"
 pushd gstcefsrc
-git checkout "$GSTREAMER_CEF_CHECKOUT"
+git checkout "$CEF_CHECKOUT"
 popd

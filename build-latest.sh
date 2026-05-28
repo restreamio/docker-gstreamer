@@ -1,13 +1,6 @@
 #!/bin/bash
 set -e
 
-if [[ $WEBKIT_USE_SCCACHE == '1' ]]; then
-    sed 's;@@SCCACHE_SCHEDULER@@;'"${SCCACHE_SCHEDULER}"';g' sccache.toml > docker/sccache.toml
-    sed -i 's;@@SCCACHE_AUTH_TOKEN@@;'"${SCCACHE_AUTH_TOKEN}"';g' docker/sccache.toml
-else
-    echo > docker/sccache.toml
-fi
-
 ARCH=$(uname -m)
 
 TAG_BASENAME="restreamio/gstreamer:$ARCH"
@@ -21,7 +14,7 @@ docker_build() {
 }
 
 # Make sure to always have fresh base image
-docker pull ubuntu:22.04
+docker pull ubuntu:26.04
 # Install dev dependencies
 docker build -t $TAG_BASENAME-dev-dependencies -f Dockerfile-dev-dependencies .
 

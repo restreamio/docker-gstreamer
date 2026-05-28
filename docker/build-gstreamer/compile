@@ -13,37 +13,26 @@ gcc -O2 -Wall -Wextra -fPIC -shared -o /usr/lib/libfakemallinfo.so /fake_mallinf
 mkdir -p /compiled-binaries/usr/lib
 cp /usr/lib/libfakemallinfo.so /compiled-binaries/usr/lib/libfakemallinfo.so
 
+export CC=`which clang`
+export CXX=`which clang++`
+
 pushd gstreamer
-# TODO: Hack: `-D gupnp=disabled` is for libnice, because libgupnp-igd causes memory leaks
-# msdk=enabled is for gst-plugings-bad to include msdk elements
-# with_x11=no is for gstreamer-vaapi to exclude X11-related functionality (that would otherwise require extra dependencies)
-MESON_OPTIONS="-Dvaapi=enabled -Dgpl=enabled -Dgst-examples=disabled -Dexamples=disabled -Dtests=disabled -Ddoc=disabled -Dqt5=disabled -Dpython=disabled -Dges=disabled -Ddevtools=disabled -Dintrospection=disabled -Dlibnice:gupnp=disabled -Dgstreamer-vaapi:x11=disabled -Dgstreamer-vaapi:encoders=enabled"
-
-ARCH=$(dpkg --print-architecture)
-if [[ $ARCH == "amd64" ]]; then
-    MESON_OPTIONS="$MESON_OPTIONS -Dgst-plugins-bad:msdk=enabled "
-fi
-
-git apply /compile-patch/0001-libnice.wrap-fix-incomplete-TCP-ICE-candidate-crash.patch
+# `-Dlibnice:gupnp=disabled` is for libnice, because libgupnp-igd causes memory leaks.
+MESON_OPTIONS="-Dgpl=enabled -Dgst-examples=disabled -Dexamples=disabled -Dtests=disabled -Ddoc=disabled -Dqt5=disabled -Dpython=disabled -Dges=disabled -Ddevtools=disabled -Dintrospection=disabled -Dlibnice:gupnp=disabled"
 
 if [[ $DEBUG == 'true' ]]; then
   if [[ $OPTIMIZATIONS == 'true' ]]; then
-    meson build -D prefix=/usr $MESON_OPTIONS -D buildtype=debugoptimized
+    meson setup build --prefix=/usr --buildtype=debugoptimized $MESON_OPTIONS
   else
-    meson build -D prefix=/usr $MESON_OPTIONS -D buildtype=debug
+    meson setup build --prefix=/usr --buildtype=debug $MESON_OPTIONS
   fi
 else
-  meson build -D prefix=/usr $MESON_OPTIONS -D buildtype=release -D b_lto=true
+  meson setup build --prefix=/usr --buildtype=release -Db_lto=true $MESON_OPTIONS
 fi
 
-git apply /compile-patch/0001-baseparse-always-update-the-input-pts-if-available-from.patch
-git apply /compile-patch/0001-compositor-add-rounded-corners-property-for-sink-pad.patch
-git apply /compile-patch/0001-compositor-add-box-shadow-property-for-sink-pads.patch
-git apply /compile-patch/0001-pad-Check-data-NULL-ness-when-probes-are-stopped-fixed-in-1.24.8.patch
-git apply /compile-patch/0001-Reduce-logs-verbosity-in-webrtcbin-when-a-FEC-decode.patch
-git apply /compile-patch/0001-glvideomixer-update-API-to-be-compatible-with-versio.patch
-git apply /compile-patch/0001-GstAudioAggregator-fix-structure-unref.patch
-git apply /compile-patch/0001-gsth264parser-fix-uint32-to-int32-truncation.patch
+git apply /compile-patch/gstreamer/0001-compositor-add-rounded-corners-property-for-sink-pad.patch
+git apply /compile-patch/gstreamer/0002-compositor-add-box-shadow-property-for-sink-pads.patch
+git apply /compile-patch/gstreamer/0003-Reduce-logs-verbosity-in-webrtcbin-when-a-FEC-decode.patch
 
 # This is needed for other plugins to be built properly
 ninja -C build install
@@ -53,8 +42,8 @@ popd
 
 # Build the GStreamer CEF plugin
 pushd gstcefsrc
-git apply /compile-patch/0001-cefsrc-download-minimal-package.patch
-git apply /compile-patch/0001-cefsrc-unmultiply-alpha.patch
+git apply /compile-patch/cefsrc/0001-cefsrc-download-minimal-package.patch
+git apply /compile-patch/cefsrc/0002-cefsrc-unmultiply-alpha.patch
 
 source /.cef-config.sh
 cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/cef -GNinja -DCEF_VERSION=$CEF_VERSION -DCEF_MINIMAL_PACKAGE=ON

@@ -1,5 +1,5 @@
-FROM ubuntu:22.04
+FROM ubuntu:26.04
 
-COPY docker/build-gstreamer/install-dependencies /
+COPY docker/build-gstreamer/install-dev-dependencies /
 
-RUN ["/install-dependencies"]
+RUN ["/install-dev-dependencies"]
