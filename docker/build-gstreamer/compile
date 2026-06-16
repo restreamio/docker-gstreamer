@@ -45,9 +45,10 @@ popd
 pushd gstcefsrc
 git apply /compile-patch/cefsrc/0001-cefsrc-download-minimal-package.patch
 git apply /compile-patch/cefsrc/0002-cefsrc-unmultiply-alpha.patch
+git apply /compile-patch/cefsrc/0003-Remove-downloads-SHA1-verification.patch
 
 source /.cef-config.sh
-cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/cef -GNinja -DCEF_VERSION=$CEF_VERSION -DCEF_MINIMAL_PACKAGE=ON
+cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/cef -GNinja -DCEF_BUILDS_HOMEPAGE_URL=$CEF_BUILDS_HOMEPAGE_URL -DCEF_VERSION=$CEF_VERSION -DCEF_MINIMAL_PACKAGE=ON
 
 DESTDIR=/compiled-binaries ninja -C build install
 rm -fr build third_party

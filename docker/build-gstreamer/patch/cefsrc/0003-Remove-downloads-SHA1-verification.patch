@@ -1,0 +1,34 @@
+From 8f23779a3dc87fbe0b86fa7ddd4c390fa76e536a Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Lo=C3=AFc=20Le=20Page?= <llepage@igalia.com>
+Date: Tue, 16 Jun 2026 18:02:02 +0200
+Subject: [PATCH] Remove downloads SHA1 verification
+
+---
+ cmake/DownloadCEF.cmake | 7 -------
+ 1 file changed, 7 deletions(-)
+
+diff --git a/cmake/DownloadCEF.cmake b/cmake/DownloadCEF.cmake
+index 52f023e..d410103 100644
+--- a/cmake/DownloadCEF.cmake
++++ b/cmake/DownloadCEF.cmake
+@@ -28,17 +28,10 @@ function(DownloadCEF platform version escaped_version download_dir)
+     if(NOT EXISTS "${CEF_DOWNLOAD_PATH}")
+       set(CEF_DOWNLOAD_URL "${CEF_BUILDS_HOMEPAGE_URL}/${CEF_DOWNLOAD_FILENAME}")
+ 
+-      # Download the SHA1 hash for the binary distribution.
+-      message(STATUS "Downloading ${CEF_DOWNLOAD_PATH}.sha1...")
+-      file(DOWNLOAD "${CEF_DOWNLOAD_URL}.sha1" "${CEF_DOWNLOAD_PATH}.sha1")
+-      file(READ "${CEF_DOWNLOAD_PATH}.sha1" CEF_SHA1_UNSTRIPPED)
+-      string(STRIP "${CEF_SHA1_UNSTRIPPED}" CEF_SHA1)
+-
+       # Download the binary distribution and verify the hash.
+       message(STATUS "Downloading ${CEF_DOWNLOAD_PATH}...")
+       file(
+         DOWNLOAD "${CEF_DOWNLOAD_URL}" "${CEF_DOWNLOAD_PATH}"
+-        EXPECTED_HASH SHA1=${CEF_SHA1}
+         SHOW_PROGRESS
+         )
+     endif()
+-- 
+2.43.0
+
