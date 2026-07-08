@@ -61,7 +61,7 @@ apt-get install -y --no-install-recommends \
   libseccomp-dev \
   xdg-dbus-proxy \
   gperf \
-  libsoup-3.0-dev \
+  libsoup2.4-dev \
   libvulkan-dev \
   libass-dev \
   libchromaprint-dev \

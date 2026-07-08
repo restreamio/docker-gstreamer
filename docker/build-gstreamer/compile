@@ -33,7 +33,6 @@ fi
 git apply /compile-patch/gstreamer/0001-compositor-add-rounded-corners-property-for-sink-pad.patch
 git apply /compile-patch/gstreamer/0002-compositor-add-box-shadow-property-for-sink-pads.patch
 git apply /compile-patch/gstreamer/0003-Reduce-logs-verbosity-in-webrtcbin-when-a-FEC-decode.patch
-git apply /compile-patch/gstreamer/0004-souphttpsrc-fix-race-conditions-when-looping.patch
 
 # This is needed for other plugins to be built properly
 ninja -C build install

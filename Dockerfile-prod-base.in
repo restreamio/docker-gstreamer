@@ -54,7 +54,7 @@ RUN \
         bubblewrap \
         libseccomp2 \
         xdg-dbus-proxy \
-        libsoup-3.0-0 \
+        libsoup-2.4-1 \
         libvulkan1 \
         libass9 \
         libchromaprint1 \
