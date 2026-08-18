@@ -33,6 +33,9 @@ fi
 git apply /compile-patch/gstreamer/0001-compositor-add-rounded-corners-property-for-sink-pad.patch
 git apply /compile-patch/gstreamer/0002-compositor-add-box-shadow-property-for-sink-pads.patch
 git apply /compile-patch/gstreamer/0003-Reduce-logs-verbosity-in-webrtcbin-when-a-FEC-decode.patch
+git apply /compile-patch/gstreamer/0004-rtmp2-rtmpclient-Close-the-connection-when-the-conne.patch
+git apply /compile-patch/gstreamer/0005-rtmp2src-Close-the-connection-when-starting-playback.patch
+git apply /compile-patch/gstreamer/0006-rtmp2sink-Close-the-connection-when-starting-publish.patch
 
 # This is needed for other plugins to be built properly
 ninja -C build install
