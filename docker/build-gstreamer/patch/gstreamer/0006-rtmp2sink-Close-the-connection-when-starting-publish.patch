@@ -1,0 +1,63 @@
+From c839840457aedfbadc48ec6b2a8f3517ec3b9db3 Mon Sep 17 00:00:00 2001
+From: Mykhailo Chelnokov <mchelnokov@gmail.com>
+Date: Mon, 17 Aug 2026 12:53:02 +0300
+Subject: [PATCH 3/3] rtmp2sink: Close the connection when starting publishing
+ fails
+
+Mirror of the rtmp2src fix: the connection is stored as task data with
+plain g_object_unref () as the destroy notify, but a GstRtmpConnection
+must be closed to be freed - its input GSource holds a reference back
+to the connection, and only gst_rtmp_connection_close () destroys that
+source.
+
+When createStream or publish is rejected by the server (for example an
+invalid stream key or NetStream.Publish.BadName for a duplicate
+publish), the connection was unreffed without being closed and leaked
+together with its TCP socket and the eventfd of its cancellable. An
+application retrying a rejected publish leaks two file descriptors per
+attempt.
+
+Also close the connection on the cancelled paths, which otherwise rely
+on cancellation waking the input source before the element's loop
+quits.
+---
+ subprojects/gst-plugins-bad/gst/rtmp2/gstrtmp2sink.c | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/subprojects/gst-plugins-bad/gst/rtmp2/gstrtmp2sink.c b/subprojects/gst-plugins-bad/gst/rtmp2/gstrtmp2sink.c
+index cc40e3e..78df9f0 100644
+--- a/subprojects/gst-plugins-bad/gst/rtmp2/gstrtmp2sink.c
++++ b/subprojects/gst-plugins-bad/gst/rtmp2/gstrtmp2sink.c
+@@ -1067,6 +1067,11 @@ client_connect_done (GObject * source, GAsyncResult * result,
+   g_task_set_task_data (task, connection, g_object_unref);
+ 
+   if (g_task_return_error_if_cancelled (task)) {
++    /* The task data notify only unrefs the connection; it has to be closed
++     * to destroy its input GSource, which holds a reference back to the
++     * connection. An unclosed connection therefore outlives the unref,
++     * leaking itself, its socket and its cancellable's eventfd. */
++    gst_rtmp_connection_close (connection);
+     g_object_unref (task);
+     return;
+   }
+@@ -1086,6 +1091,7 @@ start_publish_done (GObject * source, GAsyncResult * result, gpointer user_data)
+   GError *error = NULL;
+ 
+   if (g_task_return_error_if_cancelled (task)) {
++    gst_rtmp_connection_close (connection);
+     g_object_unref (task);
+     return;
+   }
+@@ -1095,6 +1101,9 @@ start_publish_done (GObject * source, GAsyncResult * result, gpointer user_data)
+     g_task_return_pointer (task, g_object_ref (connection),
+         gst_rtmp_connection_close_and_unref);
+   } else {
++    /* The rejected connection is handed over to nobody; close it so it is
++     * actually freed together with its socket. */
++    gst_rtmp_connection_close (connection);
+     g_task_return_error (task, error);
+   }
+ 
+-- 
+2.55.0
+
