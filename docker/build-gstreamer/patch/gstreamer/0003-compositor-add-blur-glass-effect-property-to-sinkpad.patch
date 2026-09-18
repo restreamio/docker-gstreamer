@@ -1,0 +1,275 @@
+From d26051209828982ff7df5d9e0875b2082586555e Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Lo=C3=AFc=20Le=20Page?= <llepage@igalia.com>
+Date: Thu, 17 Sep 2026 19:03:42 +0200
+Subject: [PATCH] compositor: add blur-glass effect property to sinkpads
+
+---
+ .../gst/compositor/compositor.c               | 168 ++++++++++++++++++
+ .../gst/compositor/compositor.h               |   2 +
+ 2 files changed, 170 insertions(+)
+
+diff --git a/subprojects/gst-plugins-base/gst/compositor/compositor.c b/subprojects/gst-plugins-base/gst/compositor/compositor.c
+index dfa6f35f3f..d01ff8b2fa 100644
+--- a/subprojects/gst-plugins-base/gst/compositor/compositor.c
++++ b/subprojects/gst-plugins-base/gst/compositor/compositor.c
+@@ -65,6 +65,13 @@
+  *   - "blur" the shadow blur-radius value as a #guint
+  *   - "spread" the shadow spread-radius value as a #gint
+  *   - "color" the shadow color value as a #guint32 in ARGB order
++ * * "blur-glass": Whether to apply a blur-glass effect to the picture
++ *   (#gboolean) allowing to show a box-blurred version of the background behind
++ *   the picture. The effect is disable if the picture is opaque (alpha=1.0 and
++ *   no alpha channel in the input video format) or if the "blur-glass-radius"
++ *   property is set to 0.
++ * * "blur-glass-radius": The radius in pixels of the blur-glass effect
++ *   (#guint). The effect is disable if set to 0.
+  *
+  * ## Sample pipelines
+  * |[
+@@ -258,6 +265,8 @@ gst_compositor_sizing_policy_get_type (void)
+ #define DEFAULT_PAD_OPERATOR COMPOSITOR_OPERATOR_OVER
+ #define DEFAULT_PAD_SIZING_POLICY COMPOSITOR_SIZING_POLICY_NONE
+ #define DEFAULT_PAD_BORDER_RADIUS 0
++#define DEFAULT_PAD_BLUR_GLASS FALSE
++#define DEFAULT_PAD_BLUR_GLASS_RADIUS 10
+ 
+ enum
+ {
+@@ -271,6 +280,8 @@ enum
+   PROP_PAD_SIZING_POLICY,
+   PROP_PAD_BORDER_RADIUS,
+   PROP_PAD_BOX_SHADOW,
++  PROP_PAD_BLUR_GLASS,
++  PROP_PAD_BLUR_GLASS_RADIUS,
+ };
+ 
+ typedef struct
+@@ -358,6 +369,12 @@ gst_compositor_pad_get_property (GObject * object, guint prop_id,
+       }
+     }
+       break;
++    case PROP_PAD_BLUR_GLASS:
++      g_value_set_boolean (value, pad->blur_glass);
++      break;
++    case PROP_PAD_BLUR_GLASS_RADIUS:
++      g_value_set_uint (value, pad->blur_glass_radius);
++      break;
+     default:
+       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+       break;
+@@ -522,6 +539,12 @@ gst_compositor_pad_set_property (GObject * object, guint prop_id,
+       }
+     }
+       break;
++    case PROP_PAD_BLUR_GLASS:
++      pad->blur_glass = g_value_get_boolean (value);
++      break;
++    case PROP_PAD_BLUR_GLASS_RADIUS:
++      pad->blur_glass_radius = g_value_get_uint (value);
++      break;
+     default:
+       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+       break;
+@@ -1116,6 +1139,35 @@ gst_compositor_pad_class_init (GstCompositorPadClass * klass)
+               G_PARAM_STATIC_STRINGS),
+           G_PARAM_READWRITE | GST_PARAM_CONTROLLABLE | G_PARAM_STATIC_STRINGS));
+ 
++  /**
++   * GstCompositorPad:blur-glass:
++   *
++   * If %TRUE, blurs the region of the output frame already composited
++   * behind this pad's picture (frosted-glass effect) before drawing it.
++   * Only applied when the negotiated output format is one of the 8-bit
++   * packed RGB formats (ARGB, BGRA, ABGR, RGBA, xRGB, xBGR, RGBx, BGRx).
++   *
++   * Since: 1.30
++   */
++  g_object_class_install_property (gobject_class, PROP_PAD_BLUR_GLASS,
++      g_param_spec_boolean ("blur-glass", "Blur Glass",
++          "Blur the composited background behind this pad's picture",
++          DEFAULT_PAD_BLUR_GLASS,
++          G_PARAM_READWRITE | GST_PARAM_CONTROLLABLE | G_PARAM_STATIC_STRINGS));
++
++  /**
++   * GstCompositorPad:blur-glass-radius:
++   *
++   * The box blur radius, in pixels, used by the "blur-glass" effect.
++   *
++   * Since: 1.30
++   */
++  g_object_class_install_property (gobject_class, PROP_PAD_BLUR_GLASS_RADIUS,
++      g_param_spec_uint ("blur-glass-radius", "Blur Glass Radius",
++          "Box blur radius in pixels used by the \"blur-glass\" effect",
++          0, G_MAXUINT, DEFAULT_PAD_BLUR_GLASS_RADIUS,
++          G_PARAM_READWRITE | GST_PARAM_CONTROLLABLE | G_PARAM_STATIC_STRINGS));
++
+   vaggpadclass->prepare_frame_start =
+       GST_DEBUG_FUNCPTR (gst_compositor_pad_prepare_frame_start);
+ 
+@@ -1145,6 +1197,9 @@ gst_compositor_pad_init (GstCompositorPad * compo_pad)
+       || compo_pad->border_radius.top_right > 0
+       || compo_pad->border_radius.bottom_right > 0
+       || compo_pad->border_radius.bottom_left > 0);
++
++  compo_pad->blur_glass = DEFAULT_PAD_BLUR_GLASS;
++  compo_pad->blur_glass_radius = DEFAULT_PAD_BLUR_GLASS_RADIUS;
+ }
+ 
+ 
+@@ -1962,6 +2017,10 @@ typedef struct
+ 
+   BoxShadowFrame *box_shadows;
+   guint box_shadows_len;
++
++  gboolean blur_glass;
++  guint blur_glass_radius;
++  gboolean has_alpha;
+ } CompositePadInfo;
+ 
+ static gboolean
+@@ -1977,6 +2036,10 @@ extract_composite_pad_info (GstCompositorPad * pad, CompositePadInfo * info)
+   memset (info, 0, sizeof (CompositePadInfo));
+   info->prepared_frame = prepared_frame;
+   info->pad = pad;
++  info->blur_glass = pad->blur_glass;
++  info->blur_glass_radius = pad->blur_glass_radius;
++  info->has_alpha = (pad->alpha != 1.0
++      || GST_VIDEO_INFO_HAS_ALPHA (&GST_VIDEO_AGGREGATOR_PAD (pad)->info));
+ 
+   switch (pad->op) {
+     case COMPOSITOR_OPERATOR_SOURCE:
+@@ -2428,6 +2491,102 @@ has_visible_src_rect (GstVideoRectangle * visible_src_rect_out,
+   return (visible_src_rect_out->w > 0 && visible_src_rect_out->h > 0);
+ }
+ 
++static gboolean
++format_supports_blur_glass (GstVideoFormat format)
++{
++  switch (format) {
++    case GST_VIDEO_FORMAT_ARGB:
++    case GST_VIDEO_FORMAT_BGRA:
++    case GST_VIDEO_FORMAT_ABGR:
++    case GST_VIDEO_FORMAT_RGBA:
++    case GST_VIDEO_FORMAT_xRGB:
++    case GST_VIDEO_FORMAT_xBGR:
++    case GST_VIDEO_FORMAT_RGBx:
++    case GST_VIDEO_FORMAT_BGRx:
++      return TRUE;
++    default:
++      return FALSE;
++  }
++}
++
++static gboolean
++is_dropped_by_rounded_corner (guint local_x, guint local_y,
++    const GstVideoRectangle * dest_rect, const guint * border_radius)
++{
++  for (gint c = 0; c < 4; ++c) {
++    guint radius = border_radius[c];
++    if (radius == 0) {
++      continue;
++    }
++
++    float dist = compute_rounded_corner_square_dist (local_x, local_y,
++        dest_rect->w, dest_rect->h, radius, c);
++
++    if (dist >= (float) radius * radius) {
++      return TRUE;
++    }
++  }
++
++  return FALSE;
++}
++
++static void
++blur_glass_background (CompositeTask * comp,
++    const GstVideoRectangle * visible_rect,
++    const GstVideoRectangle * dest_rect, const guint * border_radius,
++    guint radius)
++{
++  GstVideoFrame *out_frame = comp->out_frame;
++
++  if (!format_supports_blur_glass (GST_VIDEO_FRAME_FORMAT (out_frame))) {
++    return;
++  }
++
++  guint8 *image_data = GST_VIDEO_FRAME_PLANE_DATA (out_frame, 0);
++  guint line_stride = GST_VIDEO_FRAME_PLANE_STRIDE (out_frame, 0);
++  gint frame_width = GST_VIDEO_FRAME_WIDTH (out_frame);
++  guint32 *row_copy = g_new (guint32, frame_width);
++
++  guint last_visible_line = visible_rect->y + visible_rect->h - 1;
++  guint last_visible_col = visible_rect->x + visible_rect->w - 1;
++
++  for (guint y = visible_rect->y; y <= last_visible_line; ++y) {
++    guint32 *line = (guint32 *) (image_data + y * line_stride);
++    memcpy (row_copy, line, frame_width * sizeof (guint32));
++    guint local_y = (guint) ((gint) y - dest_rect->y);
++
++    for (guint x = visible_rect->x; x <= last_visible_col; ++x) {
++      guint local_x = (guint) ((gint) x - dest_rect->x);
++
++      if (is_dropped_by_rounded_corner (local_x, local_y, dest_rect,
++              border_radius)) {
++        continue;
++      }
++
++      gint start = MAX (0, (gint) x - (gint) radius);
++      gint end = MIN (frame_width - 1, (gint) x + (gint) radius);
++      guint count = end - start + 1;
++      guint sum[4] = { 0, 0, 0, 0 };
++
++      for (gint i = start; i <= end; ++i) {
++        guint8 *pixel = (guint8 *) (row_copy + i);
++        sum[0] += pixel[0];
++        sum[1] += pixel[1];
++        sum[2] += pixel[2];
++        sum[3] += pixel[3];
++      }
++
++      guint8 *dst_pixel = (guint8 *) (line + x);
++      dst_pixel[0] = sum[0] / count;
++      dst_pixel[1] = sum[1] / count;
++      dst_pixel[2] = sum[2] / count;
++      dst_pixel[3] = sum[3] / count;
++    }
++  }
++
++  g_free (row_copy);
++}
++
+ static void
+ blend_pads (CompositeTask * comp)
+ {
+@@ -2457,6 +2616,15 @@ blend_pads (CompositeTask * comp)
+             info->prepared_frame);
+       }
+     }
++    // Blur the composited background behind this pad (frosted-glass effect)
++    if (info->blur_glass && info->blur_glass_radius > 0 && info->has_alpha) {
++      if (has_visible_src_rect (&visible_src_rect, &dest_rect, comp)) {
++        visible_src_rect.x += dest_rect.x;
++        visible_src_rect.y += dest_rect.y;
++        blur_glass_background (comp, &visible_src_rect, &dest_rect,
++            info->border_radius, info->blur_glass_radius);
++      }
++    }
+     // Compute and compose the box shadows
+     for (guint j = 0; j < info->box_shadows_len; ++j) {
+       BoxShadowFrame *shadow = info->box_shadows + j;
+diff --git a/subprojects/gst-plugins-base/gst/compositor/compositor.h b/subprojects/gst-plugins-base/gst/compositor/compositor.h
+index d02da25afd..c78388484a 100644
+--- a/subprojects/gst-plugins-base/gst/compositor/compositor.h
++++ b/subprojects/gst-plugins-base/gst/compositor/compositor.h
+@@ -178,6 +178,8 @@ struct _GstCompositorPad
+     gboolean has_rounded_corners;
+   } border_radius;
+   GArray *box_shadows;
++  gboolean blur_glass;
++  guint blur_glass_radius;
+ 
+   GstCompositorOperator op;
+ 
+-- 
+2.43.0
+
